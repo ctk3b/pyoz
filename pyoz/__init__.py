@@ -74,7 +74,7 @@ dk = np.pi / max_r
 settings['dk'] = dk
 settings['max_k'] = dk * n_points
 
-
+settings['iteration-scheme'] = 'picard'
 settings['mix_param'] = 0.4
 settings['tol'] = 1e-9
 settings['max_iter'] = 1000
@@ -87,4 +87,3 @@ settings['max_dsqn'] = 100.0
 settings['lennard-jones'] = lj = dict()
 lj['lj_sigma_rule'] = 'arithmetic'
 lj['lj_epsilon_rule'] = 'geometric'
-

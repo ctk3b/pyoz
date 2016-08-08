@@ -119,7 +119,6 @@ from math import pi, sqrt
 # **********************************************************************************************  
 
 # let's define the normalization constants as described above
-# these are private
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # ! do not change the definitions since the program relies on the selection made here !
@@ -127,141 +126,137 @@ from math import pi, sqrt
 
 # 3D Fourier transform
 # normalization within the forward transformation
-#_ft_3d_forward = 1/(2.0 * pi)**3
-#_ft_3d_inverse = 1.0
+# _ft_3d_forward = 1/(2.0 * pi)**3
+# _ft_3d_inverse = 1.0
 # unitary
-#_ft_3d_forward = sqrt(1/(2.0 * pi)**3)
-#_ft_3d_inverse = sqrt(1/(2.0 * pi)**3)
+# _ft_3d_forward = sqrt(1/(2.0 * pi)**3)
+# _ft_3d_inverse = sqrt(1/(2.0 * pi)**3)
 # normalization within the inverse transformation
 _ft_3d_forward = 1.0
-_ft_3d_inverse = 1/(2.0 * pi)**3
+_ft_3d_inverse = 1 / (2.0 * pi) ** 3
 
 # 3D FT -> Fourier-Bessel transform
 # both 4pi factors within the forward transformation
-#_ft_fb_forward = 16.0 * pi**2
-#_ft_fb_inverse = 1.0
+# _ft_fb_forward = 16.0 * pi**2
+# _ft_fb_inverse = 1.0
 # unitary
 _ft_fb_forward = 4.0 * pi
 _ft_fb_inverse = 4.0 * pi
 # both 4pi factors within the inverse transformation
-#_ft_fb_forward = 1.0
-#_ft_fb_inverse = 16.0 * pi**2
+# _ft_fb_forward = 1.0
+# _ft_fb_inverse = 16.0 * pi**2
 
 # Fourier-sinus transform
 # normalization within the forward transformation
-#_ft_fs_forward = 2.0/pi
-#_ft_fs_inverse = 1.0
+# _ft_fs_forward = 2.0/pi
+# _ft_fs_inverse = 1.0
 # unitary
-#_ft_fs_forward = sqrt(2.0/pi)
-#_ft_fs_inverse = sqrt(2.0/pi)
+# _ft_fs_forward = sqrt(2.0/pi)
+# _ft_fs_inverse = sqrt(2.0/pi)
 # normalization within the inverse transformation
-#_ft_fs_forward = 1.0
-#_ft_fs_inverse = 2.0/pi
+# _ft_fs_forward = 1.0
+# _ft_fs_inverse = 2.0/pi
 # in this DST/iDST implementation, no factor is used!
 _ft_fs_forward = 1.0
 _ft_fs_inverse = 1.0
 
-# **********************************************************************************************  
+
+# **********************************************************************************************
 
 class dft:
-  """
-    class for discrete fourier transforms
-    includes the constants involved together with the procedures
-
-    r, k, deltar, deltak, npoints will have to be entered - self.npoints/pi
-        should be then called Npointscorr or something like that
-    at the moment, leave it as it is
-  """
-  npoints = 0
-  dr = 0.0
-  dk = 0.0
-  r = None
-  k = None
-  fft_prefactor = 1.0
-  ift_prefactor = 1.0
-  # we are making a FT of a convolution f*g
-  # it's known that there is an additional constant factor involved, equal to 
-  # the reciprocal of the forward fourier transform normalization factor
-  # we need to access this factor from the solver routine
-  # due to the chosen parameters, this is equal 1.0 at the moment
-  ft_convolution_factor = 1.0/_ft_3d_forward
-
-  def __init__(self, npoints, dr, dk, r, k):
-    self.npoints = npoints
-    self.dr = dr
-    self.dk = dk
-    self.r = r
-    self.k = k
-    
-    # when FST is used in order to replace the FBT, it comes with no prefactor. therefore,
-    # any prefactor already present has to be canceled
-    # since the prefactor in this case is 1.0, we can skip it
-    # care is taken here of the dr*dk product and the normalization of the continuous FST
-    #self.fft_prefactor = _ft_3d_forward * _ft_fb_forward / ft_fs_forward 
-    self.fft_prefactor = _ft_3d_forward * _ft_fb_forward 
-    #self.ift_prefactor = _ft_3d_inverse * _ft_fb_inverse * (npoints / 2.0) / ft_fs_inverse
-    self.ift_prefactor = _ft_3d_inverse * _ft_fb_inverse * (npoints / 2.0)
-    
-  def print_status(self):
     """
-      print out the status of the dft class - constants, ...
-    """
-    print("\tFT set up for\t\t\t%u points" % self.npoints)
-    print("\tFT prefactor \t\t\t%f" % self.fft_prefactor)
-    print("\tiFT prefactor \t\t\t%f" % self.ift_prefactor)
-    print("\tfactor involved in convolution\t%f" % self.ft_convolution_factor)
-  # end def print_status()
-    
-  def dfbt(self, f, norm=1.0, corr=0.0):
-    """
-      perform the discrete Fourier-Bessel transform of the input function f
-      
-      we replace the classical 3D Fourier transform by a Fourier-Bessel transform,
-      which in turn is evaluated using the Fourier-sinus transform
-      
-      note that there are some extra factors/operations involved
-      
-      if corr (correction) is defined, it is added to the transformed function
-      if norm (normalization) is defined, the resulting function is multiplied by it
-      
-      see the text above and the documentation for more information
-    """
-    # FT(f) can be calculated as DST(f*r)dr/k
-    F = self.fft_prefactor * _dst(f * self.r) * self.dr / self.k
-    
-    # apply the normalization
-    F *= norm
+      class for discrete fourier transforms
+      includes the constants involved together with the procedures
 
-    # apply the correction (already includes sqrt(rho_i rho_j)
-    Fc = F + corr
-
-    # return both corrected and uncorrected functions
-    return(F, Fc)
-  # end def dft()
-    
-  def idfbt(self, F, norm=1.0, corr=0.0):
+      r, k, deltar, deltak, npoints will have to be entered - self.npoints/pi
+          should be then called Npointscorr or something like that
+      at the moment, leave it as it is
     """
-      perform the inverse discrete Fourier-Bessel transform of the input function F
-      
-      we replace the classical 3D Fourier transform by a Fourier-Bessel transform,
-      which in turn is evaluated using the Fourier-sinus transform
-      
-      note that there are some extra factors/operations involved
+    npoints = 0
+    dr = 0.0
+    dk = 0.0
+    r = None
+    k = None
+    fft_prefactor = 1.0
+    ift_prefactor = 1.0
+    # we are making a FT of a convolution f*g
+    # it's known that there is an additional constant factor involved, equal to
+    # the reciprocal of the forward fourier transform normalization factor
+    # we need to access this factor from the solver routine
+    # due to the chosen parameters, this is equal 1.0 at the moment
+    ft_convolution_factor = 1.0 / _ft_3d_forward
 
-      if norm (normalization) is defined, the resulting function is divided by it
-      in case of zero value, the resulting function is set to zero, or to corr (if defined)
+    def __init__(self, npoints, dr, dk, r, k):
+        self.npoints = npoints
+        self.dr = dr
+        self.dk = dk
+        self.r = r
+        self.k = k
 
-      see the text above and the documentation for more information
-    """
-    if (norm == 0.0):
-      # infinite dilution
-      f = zeros_like(F) + corr
-    else:
-      f = (self.ift_prefactor * _idst(F * self.k) * self.dk / self.r) / norm 
+        # when FST is used in order to replace the FBT, it comes with no prefactor. therefore,
+        # any prefactor already present has to be canceled
+        # since the prefactor in this case is 1.0, we can skip it
+        # care is taken here of the dr*dk product and the normalization of the continuous FST
+        # self.fft_prefactor = _ft_3d_forward * _ft_fb_forward / ft_fs_forward
+        self.fft_prefactor = _ft_3d_forward * _ft_fb_forward
+        # self.ift_prefactor = _ft_3d_inverse * _ft_fb_inverse * (npoints / 2.0) / ft_fs_inverse
+        self.ift_prefactor = _ft_3d_inverse * _ft_fb_inverse * (npoints / 2.0)
 
-    return(f)
-  # end def idft()
-    
+    def print_status(self):
+        """
+          print out the status of the dft class - constants, ...
+        """
+        print("\tFT set up for\t\t\t%u points" % self.npoints)
+        print("\tFT prefactor \t\t\t%f" % self.fft_prefactor)
+        print("\tiFT prefactor \t\t\t%f" % self.ift_prefactor)
+        print(
+            "\tfactor involved in convolution\t%f" % self.ft_convolution_factor)
+
+    # end def print_status()
+
+    def dfbt(self, f, norm=1.0, corr=0.0):
+        """
+          perform the discrete Fourier-Bessel transform of the input function f
+
+          we replace the classical 3D Fourier transform by a Fourier-Bessel transform,
+          which in turn is evaluated using the Fourier-sinus transform
+
+          note that there are some extra factors/operations involved
+
+          if corr (correction) is defined, it is added to the transformed function
+          if norm (normalization) is defined, the resulting function is multiplied by it
+
+          see the text above and the documentation for more information
+        """
+        # FT(f) can be calculated as DST(f*r)dr/k
+        F = self.fft_prefactor * _dst(f * self.r) * self.dr / self.k
+        F *= norm
+        Fc = F + corr  # correction already includes sqrt(rho_i rho_j)
+        return F, Fc
+
+    def idfbt(self, F, norm=1.0, corr=0.0):
+        """
+          perform the inverse discrete Fourier-Bessel transform of the input function F
+
+          we replace the classical 3D Fourier transform by a Fourier-Bessel transform,
+          which in turn is evaluated using the Fourier-sinus transform
+
+          note that there are some extra factors/operations involved
+
+          if norm (normalization) is defined, the resulting function is divided by it
+          in case of zero value, the resulting function is set to zero, or to corr (if defined)
+
+          see the text above and the documentation for more information
+        """
+        if norm == 0.0:  # infinite dilution
+            f = zeros_like(F) + corr
+        else:
+            f = (self.ift_prefactor * _idst(
+                F * self.k) * self.dk / self.r) / norm
+        return f
+        # end def idft()
+
+
 # **********************************************************************************************  
 
 # DST-I according to wiki
@@ -272,7 +267,7 @@ class dft:
 # luc's version is also present (padding the function to twice as many samples
 # with zeroes. the formal correctness of luc's code has to be checked
 
-def _dst(x,axis=-1):
+def _dst(x, axis=-1):
     """Discrete Sine Transform (DST-I)
 
     Implemented using 2(N+1)-point FFT
@@ -283,50 +278,52 @@ def _dst(x,axis=-1):
     """
     n = len(x.shape)
     N = x.shape[axis]
-    slices = [None]*3
+    slices = [None] * 3
     for k in range(3):
         slices[k] = []
         for j in range(n):
             slices[k].append(slice(None))
     newshape = list(x.shape)
-    newshape[axis] = 2*(N+1)
-    xtilde = zeros(newshape,float64)
-    slices[0][axis] = slice(1,N+1)
-    slices[1][axis] = slice(N+2,None)
-    slices[2][axis] = slice(None,None,-1)
+    newshape[axis] = 2 * (N + 1)
+    xtilde = zeros(newshape, float64)
+    slices[0][axis] = slice(1, N + 1)
+    slices[1][axis] = slice(N + 2, None)
+    slices[2][axis] = slice(None, None, -1)
     for k in range(3):
         slices[k] = tuple(slices[k])
     xtilde[slices[0]] = x
     xtilde[slices[1]] = -x[slices[2]]
-    Xt = np_fft.fft(xtilde,axis=axis)
-    return (-imag(Xt)/2)[slices[0]]
+    Xt = np_fft.fft(xtilde, axis=axis)
+    return (-imag(Xt) / 2)[slices[0]]
 
-def _idst(v,axis=-1):
+
+def _idst(v, axis=-1):
     n = len(v.shape)
     N = v.shape[axis]
-    slices = [None]*3
+    slices = [None] * 3
     for k in range(3):
         slices[k] = []
         for j in range(n):
             slices[k].append(slice(None))
     newshape = list(v.shape)
-    newshape[axis] = 2*(N+1)
-    Xt = zeros(newshape,complex128)
-    slices[0][axis] = slice(1,N+1)
-    slices[1][axis] = slice(N+2,None)
-    slices[2][axis] = slice(None,None,-1)
-    val = 2j*v
+    newshape[axis] = 2 * (N + 1)
+    Xt = zeros(newshape, complex128)
+    slices[0][axis] = slice(1, N + 1)
+    slices[1][axis] = slice(N + 2, None)
+    slices[2][axis] = slice(None, None, -1)
+    val = 2j * v
     for k in range(3):
         slices[k] = tuple(slices[k])
     Xt[slices[0]] = -val
     Xt[slices[1]] = val[slices[2]]
-    xhat = real(np_fft.ifft(Xt,axis=axis))
+    xhat = real(np_fft.ifft(Xt, axis=axis))
     return xhat[slices[0]]
 
-# **********************************************************************************************  
+
+# **********************************************************************************************
 
 # DST-I according to Luc (fill with zeros)
-def _dst_luc(x,axis=-1):
+def _dst_luc(x, axis=-1):
     """Discrete Sine Transform (DST-I)
 
     Implemented using 2(N+1)-point FFT
@@ -337,70 +334,71 @@ def _dst_luc(x,axis=-1):
     """
     n = len(x.shape)
     N = x.shape[axis]
-    slices = [None]*3
+    slices = [None] * 3
     for k in range(3):
         slices[k] = []
         for j in range(n):
             slices[k].append(slice(None))
     newshape = list(x.shape)
-    newshape[axis] = 2*(N+1)
-    xtilde = zeros(newshape,float64)
-    slices[0][axis] = slice(1,N+1)
-    slices[1][axis] = slice(N+2,None)
-    slices[2][axis] = slice(None,None,-1)
+    newshape[axis] = 2 * (N + 1)
+    xtilde = zeros(newshape, float64)
+    slices[0][axis] = slice(1, N + 1)
+    slices[1][axis] = slice(N + 2, None)
+    slices[2][axis] = slice(None, None, -1)
     for k in range(3):
         slices[k] = tuple(slices[k])
     xtilde[slices[0]] = x
     # the following is not used here
     # instead it's replaced by zeros
-    #xtilde[slices[1]] = -x[slices[2]]
-    Xt = np_fft.fft(xtilde,axis=axis)
-    #return (-imag(Xt)/2)[slices[0]]
+    # xtilde[slices[1]] = -x[slices[2]]
+    Xt = np_fft.fft(xtilde, axis=axis)
+    # return (-imag(Xt)/2)[slices[0]]
     return (-imag(Xt))[slices[0]]
 
-def idst_luc(v,axis=-1):
+
+def idst_luc(v, axis=-1):
     n = len(v.shape)
     N = v.shape[axis]
-    slices = [None]*3
+    slices = [None] * 3
     for k in range(3):
         slices[k] = []
         for j in range(n):
             slices[k].append(slice(None))
     newshape = list(v.shape)
-    newshape[axis] = 2*(N+1)
-    Xt = zeros(newshape,complex128)
-    slices[0][axis] = slice(1,N+1)
-    slices[1][axis] = slice(N+2,None)
-    slices[2][axis] = slice(None,None,-1)
-    #val = 2j*v
-    val = 4j*v
+    newshape[axis] = 2 * (N + 1)
+    Xt = zeros(newshape, complex128)
+    slices[0][axis] = slice(1, N + 1)
+    slices[1][axis] = slice(N + 2, None)
+    slices[2][axis] = slice(None, None, -1)
+    # val = 2j*v
+    val = 4j * v
     for k in range(3):
         slices[k] = tuple(slices[k])
     Xt[slices[0]] = -val
     # the following is not used here
     # instead it's replaced by zeros
-    #Xt[slices[1]] = val[slices[2]]
-    xhat = real(np_fft.ifft(Xt,axis=axis))
+    # Xt[slices[1]] = val[slices[2]]
+    xhat = real(np_fft.ifft(Xt, axis=axis))
     return xhat[slices[0]]
 
-# **********************************************************************************************  
+
+# **********************************************************************************************
 
 if __name__ == "__main__":
-  print __doc__
-  print("\nDST of an array [1,2,3,4,5,6,7,8,9]")
-  
-  a = array([1,2,3,4,5,6,7,8,9])
-  b1 = dst(a)
-  b2 = dst_luc(a)
-  c1 = idst(b1)
-  c2 = idst_luc(b2)
-  
-  print("version wiki")
-  print(b1)
-  print(c1)
-  print(" ")
-  
-  print("version Luc")
-  print(b2)
-  print(c2)
+    print(__doc__)
+    print("\nDST of an array [1,2,3,4,5,6,7,8,9]")
 
+    a = array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+    b1 = _dst(a)
+    b2 = _dst_luc(a)
+    c1 = _idst(b1)
+    c2 = idst_luc(b2)
+
+    print("version wiki")
+    print(b1)
+    print(c1)
+    print(" ")
+
+    print("version Luc")
+    print(b2)
+    print(c2)

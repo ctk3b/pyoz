@@ -49,8 +49,8 @@ class Potential(object):
         self.ij = np.zeros(shape=(n_components, n_components, r.shape[0]))
         self.ij_ind = np.zeros(shape=(n_potentials, n_components, n_components, r.shape[0]))
 
-        self.erf_ij_real = np.zeros(shape=(n_components, n_components, r.shape[0]))
-        self.erf_ij_fourier = np.zeros(shape=(n_components, n_components, r.shape[0]))
+        self.erf_real = np.zeros(shape=(n_components, n_components, r.shape[0]))
+        self.erf_fourier = np.zeros(shape=(n_components, n_components, r.shape[0]))
 
         for n, (pot_type, pot_parms) in enumerate(potentials.items()):
             # TODO: Factor out individual potential classes
@@ -75,22 +75,4 @@ class Potential(object):
                 pot_parms['epsilon_ij'] = epsilon_ij
             else:
                 raise ValueError("Unsupported potential: {}".format(pot_type))
-
-
-class ModMayerF(object):
-    def __init__(self, U):
-        """calculate exp(-beta U_ij) == Mayer function + 1 according to the discretized potential
-
-           calculate also the contributions of individual potentials to exp(Uij)
-           exp(-Uij)=exp(-U1ij-U2ij-U3ij-...)=exp(-U1ij)exp(-U2ij)exp(-U3ij)...
-           the order of contributions is the same as the order of potentials in the parm list
-           store the contributions in a list; they will be used later (osmotic coefficients)
-        """
-        # since the potential is in kT units, we just do the exp(-U_ij)
-        self.ij = np.exp(-U.ij)
-        self.ij_ind = np.exp(-U.ij_ind)
-
-        # evaluate the correction according to Ng
-        self.erf_real = np.exp(U.erf_ij_real)
-        self.erf_fourier = np.exp(U.erf_ij_fourier)
 

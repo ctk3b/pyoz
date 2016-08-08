@@ -31,7 +31,7 @@ def dotproduct(ctrl, syst, r, X_ij, Y_ij):
     dotprod = 0.0
 
     # calculate the integrand (array product)
-    integrand = 4.0 * pi * X_ij * Y_ij
+    integrand = 4.0 * np.pi * X_ij * Y_ij
 
     for i in range(syst['ncomponents']):
         for j in range(syst['ncomponents']):
