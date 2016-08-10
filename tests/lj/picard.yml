@@ -1,0 +1,25 @@
+# 2 components, noncharged LJ particles
+# with HNC
+# picard iteration
+
+# control variables for the calculation
+n_points: 4096 # use power of 2!
+dr: 0.05 # discretization step in A
+mix_param: 1.0 # mixing parameter for direct iteration
+tol: 1e-9 # convergence criterion
+max_iter: 5000 # maximum number of iterations
+
+# system information
+T: 298.15 # system temperature
+n_components: 2 # number of components
+closure: hnc # closure relation
+names: P M # names of components
+concentrations: 0.5 0.5 # concentrations of individual components
+conc_unit: mol_L # in moles pro liter
+
+potentials:
+  lennard-jones:
+    sigma: 0.4 0.6 # distance where the interaction is zero
+    sigma_rule: arithmetic # arit/geom
+    epsilon: 0.1 0.1 # potential minimum depth
+    epsilon_rule: geometric # arit/geom
