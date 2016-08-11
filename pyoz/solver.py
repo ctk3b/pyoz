@@ -1,22 +1,19 @@
 from copy import deepcopy
 import itertools as it
-import os
-from time import time
+import time
 
 import numpy as np
 import simtk.unit as u
 from simtk.unit import AVOGADRO_CONSTANT_NA as Na
 from simtk.unit import BOLTZMANN_CONSTANT_kB as kB
-import yaml
 
 import pyoz
 from pyoz.potential import Potential
 from pyoz.exceptions import PyozError
-import pyoz.thermodynamic_properties as properties
 
 from pyoz import dft as ft
 from pyoz.closure import supported_closures
-from pyoz.misc import squared_normed_distance, dotproduct
+from pyoz.misc import squared_normed_distance
 
 
 def prep_input(input_dict):
@@ -80,7 +77,12 @@ def solve_ornstein_zernike(inputs):
     converged = False
     total_iter = 0
     n_iter = 0
+    start = time.time()
+
+    logger.info('Starting iteration...')
+    logger.info('   {:8s}{:10s}{:10s}'.format('step', 'time (s)', 'error'))
     while not converged and n_iter < settings['max_iter']:
+        loop_start = time.time()
         n_iter += 1
         total_iter += 1
         G_r_previous = np.copy(G_r)
@@ -112,6 +114,7 @@ def solve_ornstein_zernike(inputs):
 
         # Test for convergence.
         norm_dsqn = squared_normed_distance(G_r, G_r_previous)
+
         if norm_dsqn < settings['tol']:
             converged = True
             break
@@ -124,9 +127,12 @@ def solve_ornstein_zernike(inputs):
         else:
             raise PyozError('Iteration scheme "{}" not yet '
                             'implemented.'.format(iter_scheme))
-
+        logger.info('   {:<8d}{:<8.2f}{:<8.2e}'.format(n_iter,
+                                                    time.time() - loop_start,
+                                                    norm_dsqn))
+    end = time.time()
     if converged:
-        logger.info('Converged after {} iterations'.format(n_iter))
+        logger.info('Converged in {:.2f}s after {} iterations'.format(end-start, n_iter))
         c_r, g_r = closure(U, G_r)
         return r, g_r
     else:

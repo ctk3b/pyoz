@@ -1,4 +1,4 @@
-"""Iterative Ornstein-Zernike equation solver in Python. """
+"""pyOZ: An iterative Ornstein-Zernike equation solver """
 
 import logging
 
@@ -8,8 +8,11 @@ import numpy as np
 
 from pyoz.closure import supported_closures
 from pyoz.solver import solve_ornstein_zernike
+from pyoz.thermodynamic_properties import compute_kirkwood_buff
 
-__all__ = ['solve_ornstein_zernike']
+__all__ = ['solve_ornstein_zernike',
+
+           'compute_kirkwood_buff']
 
 __version__ = '0.4.0'
 __author__ = 'Lubos Vrbka'

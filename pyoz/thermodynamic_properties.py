@@ -1,85 +1,16 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# this file is part of the pyOZ bundle
-# pyOZ is a solver of the Ornstein-Zernike equation written in Python
-# pyOZ is released under the BSD license
-# see the file LICENSE for more information
-
-"""
-Module defining functions for calculation of thermodynamic properties
-revision of this file: 0.1.5
-
-  kirkwood-buff integrals
-  osmotic coefficients
-  isothermal compressibilities
-  excess chemical potentials, activity coefficients
-"""
-
-import sys
-from numpy import exp, pi, inf, diff, gradient, zeros
+import numpy as np
 from scipy import integrate
 
 
-# **********************************************************************************************
+def compute_kirkwood_buff(r, g_r):
+    """Compute the Kirkwood-Buff integrals.
 
-def kirkwood_buff(ctrl, syst, r, g_r_ij):
+    G_ij = 4 pi \int_0^\inf [g_ij(r)-1]r^2 dr
     """
-       calculates the kirkwood-buff integrals (4pi \int_0^\infty (g(r)-1)r^2 dr)
-    """
+    return 4.0 * np.pi * integrate.simps(y=(g_r - 1.0) * r**2,
+                                         x=r,
+                                         even='last')
 
-    # calculate only the unique combinations (12 = 21 due to pair potential)
-    # kb_integrals = []
-    # for i in range(syst['ncomponents']):
-    #  for j in range(i, syst['ncomponents']):
-    # integrate numerically using simpson rule
-    # we could use x = r and skip dx, but the spacing is regular so it's probably better to do it this way
-    # simspon requires odd number of samples, which we have; just to be sure, we give the option for the
-    # even number of samples - for the first interval the trapezoidal rule is used and then simpson for the rest
-    #    kb_int = 4.0 * pi * int_simpson((g_r_ij[i,j,:] - 1.0) * r**2, r, dx=ctrl['deltar'], even='last')
-    #    kb_integrals.append(kb_int)
-
-    # if (len(kb_integrals) != syst['ncomb']):
-    #  print("inconsistency encountered! got %u integrals for %u combinations" % (len(kb_integrals), syst['ncomb']))
-    #  sys.exit(2)
-
-    # print("\tKirkwood-Buff integrals\t"),
-    # for index in range(len(kb_integrals)):
-    # print integrals for all unique combinations
-    # calculate the coefficient
-    #  print("%f " % (kb_integrals[index])),
-    # print("\n")
-
-    # other possibility - calculate all integrals at once and then write only the required ones
-    # probably better for the future
-    # kb_integrals = array((syst['ncomponents'], syst['ncomponents']))
-    # integrate numerically using simpson rule
-    # we could use x = r and skip dx, but the spacing is regular so it's probably better to do it this way
-    # simspon requires odd number of samples, which we have; just to be sure, we give the option for the
-    # even number of samples - for the first interval the trapezoidal rule is used and then simpson for the rest
-    kb_integrals = 4.0 * pi * integrate.simps((g_r_ij - 1.0) * r ** 2, r,
-                                              dx=ctrl['deltar'], even='last')
-
-    print("\tKirkwood-Buff integrals")
-    print("\t\tunique comb.\t\t"),
-    for i in range(syst['ncomponents']):
-        for j in range(i, syst['ncomponents']):
-            # print integrals for all unique combinations
-            # calculate the coefficient
-            print("%f " % (kb_integrals[i, j])),
-            # print("\n\t\tKB*rho\t")
-            # for i in range(syst['ncomponents']):
-            #  for j in range(i, syst['ncomponents']):
-            # print integrals for all unique combinations
-            # calculate the coefficient
-    # print("%f " % (syst['dens']['num'][i]*kb_integrals[i,j])),
-    print("\n")
-
-
-    # return kb_integrals
-
-
-# **********************************************************************************************  
 
 def osmotic_coeff(ctrl, syst, parm, const, r, g_r_ij, G_r_ij, G_term_ij,
                   U_ij_individual, dU_ij_individual, U_discontinuity,
@@ -450,13 +381,3 @@ def compressibility(ctrl, syst, const, r, c_sr):
     print("\t\tideal chi, chi^(-1)\t%.5e %f" % (chi_id, chi_id_r))
     print("\t\tabsolute, chi, chi^(-1)\t%.5e %f" % (chi, chi_r))
     print("")
-
-
-# end def compressibility()
-
-# **********************************************************************************************  
-
-if __name__ == "__main__":
-    print(__doc__)
-    print(
-        "Usage as a standalone application/script is not supported at the moment")

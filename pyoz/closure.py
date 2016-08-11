@@ -1,15 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# this file is part of the pyOZ bundle
-# pyOZ is a solver of the Ornstein-Zernike equation written in Python
-# pyOZ is released under the BSD license
-# see the file LICENSE for more information
-
-"""
-Module defining closure relations
-"""
-
 import numpy as np
 
 
