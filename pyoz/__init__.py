@@ -31,6 +31,7 @@ logger.info('pyOZ - version {:s}'.format(__version__))
 
 settings = dict()
 
+# TODO: rework internal units to be consistent with the below
 # Units
 # =====
 # distance: nm
@@ -65,28 +66,37 @@ settings['e'] = (1 * u.elementary_charge).in_units_of(u.coulomb)
 # number of discretization points
 n_points_exp = 12
 settings['n_points_exp'] = 12
-n_points = 2 ** n_points_exp - 1
+n_points = 2 ** n_points_exp
 settings['n_points'] = n_points
 
-dr = 0.05
+dr = 0.05 * u.angstrom
 settings['dr'] = dr
 
-max_r = dr * n_points
+max_r = dr.value_in_unit(u.angstrom) * n_points
 settings['max_r'] = max_r
 dk = np.pi / max_r
 settings['dk'] = dk
 settings['max_k'] = dk * n_points
 
 settings['iteration-scheme'] = 'picard'
-settings['mix_param'] = 0.4
+settings['mix_param'] = 1.0
 settings['tol'] = 1e-9
 settings['max_iter'] = 1000
 settings['max_dsqn'] = 100.0
 
 # Potentials
 # ==========
+settings['potentials'] = dict()
 
 # Lennard-Jones
-settings['lennard-jones'] = lj = dict()
-lj['lj_sigma_rule'] = 'arithmetic'
-lj['lj_epsilon_rule'] = 'geometric'
+lj = settings['potentials']['lennard-jones'] = dict()
+lj['sigmas'] = 0.5 * u.nanometers
+lj['sigma_rule'] = 'arithmetic'
+lj['epsilons'] = 0.1 * u.kilojoules_per_mole
+lj['epsilon_rule'] = 'geometric'
+
+# System info
+# ===========
+settings['closure'] = 'hnc'
+settings['n_components'] = 1
+settings['concentrations'] = [0.1 * u.moles / u.liter]

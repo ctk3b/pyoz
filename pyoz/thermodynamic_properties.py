@@ -27,7 +27,7 @@ def osmotic_coeff(ctrl, syst, parm, const, r, g_r_ij, G_r_ij, G_term_ij,
         prefactor = 0.0
     else:
         # calculate the prefactor 4 pi / 6 rho
-        prefactor = 2.0 * pi / (3.0 * syst['dens']['totnum'])
+        prefactor = 2.0 * np.pi / (3.0 * syst['dens']['totnum'])
     # end if (syst['dens']['totnum'] == 0.0)
 
     # calculate separately the contributions of individual potentials
@@ -209,7 +209,7 @@ def osmotic_coeff(ctrl, syst, parm, const, r, g_r_ij, G_r_ij, G_term_ij,
                     # integrand = zeros(ctrl['npoints'])
                     # integrand[1:] = diff(modMayerFuncContrib[pot_index][i,j])/ ctrl['deltar']
                     # using gradient
-                    integrand = gradient(modMayerFuncContrib[pot_index][i, j],
+                    integrand = np.gradient(modMayerFuncContrib[pot_index][i, j],
                                          ctrl['deltar'])
                     # calculate the product of remaining contributions to the total pair correlation function
                     # contributions of other pair potentials

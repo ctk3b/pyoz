@@ -1,14 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# this file is part of the pyOZ bundle
-# pyOZ is a solver of the Ornstein-Zernike equation written in Python
-# pyOZ is released under the BSD license
-# see the file LICENSE for more information
-
-# for the details on the sine transform code itself, 
-# please see the documentation of the respective routine (around line 240)
-
 """
   module for performing various types of discrete transforms
   revision of this file: 0.1.4

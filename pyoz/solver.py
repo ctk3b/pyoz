@@ -8,12 +8,11 @@ from simtk.unit import AVOGADRO_CONSTANT_NA as Na
 from simtk.unit import BOLTZMANN_CONSTANT_kB as kB
 
 import pyoz
-from pyoz.potential import Potential
-from pyoz.exceptions import PyozError
-
-from pyoz import dft as ft
 from pyoz.closure import supported_closures
+from pyoz import dft as ft
+from pyoz.exceptions import PyozError
 from pyoz.misc import squared_normed_distance
+from pyoz.potential import Potential
 
 
 def prep_input(input_dict):
@@ -43,7 +42,7 @@ def prep_input(input_dict):
     return settings
 
 
-def solve_ornstein_zernike(inputs):
+def solve_ornstein_zernike(inputs, status_updates=True):
     logger = pyoz.logger
     settings = prep_input(inputs)
 
@@ -80,7 +79,8 @@ def solve_ornstein_zernike(inputs):
     start = time.time()
 
     logger.info('Starting iteration...')
-    logger.info('   {:8s}{:10s}{:10s}'.format('step', 'time (s)', 'error'))
+    if status_updates:
+        logger.info('   {:8s}{:10s}{:10s}'.format('step', 'time (s)', 'error'))
     while not converged and n_iter < settings['max_iter']:
         loop_start = time.time()
         n_iter += 1
@@ -127,9 +127,10 @@ def solve_ornstein_zernike(inputs):
         else:
             raise PyozError('Iteration scheme "{}" not yet '
                             'implemented.'.format(iter_scheme))
-        logger.info('   {:<8d}{:<8.2f}{:<8.2e}'.format(n_iter,
-                                                    time.time() - loop_start,
-                                                    norm_dsqn))
+        if status_updates:
+            logger.info('   {:<8d}{:<8.2f}{:<8.2e}'.format(n_iter,
+                                                        time.time() - loop_start,
+                                                        norm_dsqn))
     end = time.time()
     if converged:
         logger.info('Converged in {:.2f}s after {} iterations'.format(end-start, n_iter))
