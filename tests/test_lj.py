@@ -20,7 +20,7 @@ def test_two_comp_picard(T, C, sig, eps):
     oz.logger.info('C=  {:8.2f}{:8.2f}'.format(*C))
     oz.logger.info('sig={:8.2f}{:8.2f}'.format(*sig))
     oz.logger.info('eps={:8.2f}{:8.2f}'.format(*eps))
-    inputs = deepcopy(oz.settings)
+    inputs = deepcopy(oz.defaults)
     inputs['T'] = T * u.kelvin
     n_components = 2
     inputs['n_components'] = n_components
@@ -37,10 +37,10 @@ def test_two_comp_picard(T, C, sig, eps):
     lj['epsilon_rule'] = 'geometric'
 
     r, g_r = oz.solve_ornstein_zernike(inputs, status_updates=False)
-    assert np.allclose(g_r[:, :, 0],
-                       np.zeros(shape=(n_components, n_components)))
-    assert np.allclose(g_r[:, :, -1],
-                       np.ones(shape=(n_components, n_components)))
+    assert np.allclose(g_r[:, :, :10],
+                       np.zeros(shape=(n_components, n_components, 10)))
+    assert np.allclose(g_r[:, :, -10:],
+                       np.ones(shape=(n_components, n_components, 10)))
 
 if __name__ == '__main__':
     test_two_comp_picard(T=298.15,

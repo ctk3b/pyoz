@@ -27,9 +27,12 @@ logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
 logger.info('pyOZ - version {:s}'.format(__version__))
+logger.info('')
 
 
-settings = dict()
+
+
+defaults = dict()
 
 # TODO: rework internal units to be consistent with the below
 # Units
@@ -45,58 +48,48 @@ settings = dict()
 # Physical constants
 # ==================
 T = 300 * u.kelvin
-settings['T'] = T
-settings['epsilon_r'] = 78.3 * u.dimensionless
-settings['epsilon_0'] = 8.854187817e-12 * u.coulomb**3 / u.joule / u.meter
+defaults['T'] = T
+defaults['epsilon_r'] = 78.3 * u.dimensionless
+defaults['epsilon_0'] = 8.854187817e-12 * u.coulomb ** 3 / u.joule / u.meter
 
 # Coulomb interaction factor - Bjerrum length
 # V(coul) in kT is then calculated as V = b_l * z1 * z2 / r
 # with z in elementary charge units and r in A
-settings['bjerrum_length'] = 0.0
+defaults['bjerrum_length'] = 0.0
 
 kT = T * kB
-settings['kB'] = kB
-settings['kT'] = kT
-settings['beta'] = 1 / kT
-settings['e'] = (1 * u.elementary_charge).in_units_of(u.coulomb)
+defaults['kT'] = kT
+defaults['kB'] = kB
+defaults['kT'] = kT
+defaults['beta'] = 1 / kT
+defaults['e'] = (1 * u.elementary_charge).in_units_of(u.coulomb)
 
 # Algorithm control
 # =================
 
 # number of discretization points
 n_points_exp = 12
-settings['n_points_exp'] = 12
+defaults['n_points_exp'] = 12
 n_points = 2 ** n_points_exp
-settings['n_points'] = n_points
+defaults['n_points'] = n_points
 
 dr = 0.05 * u.angstrom
-settings['dr'] = dr
+defaults['dr'] = dr
 
 max_r = dr.value_in_unit(u.angstrom) * n_points
-settings['max_r'] = max_r
+defaults['max_r'] = max_r
 dk = np.pi / max_r
-settings['dk'] = dk
-settings['max_k'] = dk * n_points
+defaults['dk'] = dk
+defaults['max_k'] = dk * n_points
 
-settings['iteration-scheme'] = 'picard'
-settings['mix_param'] = 1.0
-settings['tol'] = 1e-9
-settings['max_iter'] = 1000
-settings['max_dsqn'] = 100.0
-
-# Potentials
-# ==========
-settings['potentials'] = dict()
-
-# Lennard-Jones
-lj = settings['potentials']['lennard-jones'] = dict()
-lj['sigmas'] = 0.5 * u.nanometers
-lj['sigma_rule'] = 'arithmetic'
-lj['epsilons'] = 0.1 * u.kilojoules_per_mole
-lj['epsilon_rule'] = 'geometric'
+defaults['iteration_scheme'] = 'picard'
+defaults['mix_param'] = 1.0
+defaults['tol'] = 1e-9
+defaults['max_iter'] = 1000
+defaults['max_dsqn'] = 100.0
 
 # System info
 # ===========
-settings['closure'] = 'hnc'
-settings['n_components'] = 1
-settings['concentrations'] = [0.1 * u.moles / u.liter]
+defaults['closure'] = 'hnc'
+defaults['n_components'] = 1
+defaults['concentrations'] = [0.1 * u.moles / u.liter]

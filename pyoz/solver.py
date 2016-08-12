@@ -10,13 +10,13 @@ from simtk.unit import BOLTZMANN_CONSTANT_kB as kB
 import pyoz
 from pyoz.closure import supported_closures
 from pyoz import dft as ft
-from pyoz.exceptions import PyozError
-from pyoz.misc import squared_normed_distance
-from pyoz.potential import Potential
+from pyoz.exceptions import PyozError, PyozWarning
+from pyoz.misc import rms_normed
+from pyoz.potentials import TotalPotential
 
 
 def prep_input(input_dict):
-    settings = deepcopy(pyoz.settings)
+    settings = deepcopy(pyoz.defaults)
     settings.update(deepcopy(input_dict))
 
     settings['n_points'] -= 1
@@ -54,9 +54,9 @@ def solve_ornstein_zernike(inputs, status_updates=True):
     dft = ft.dft(n_points, dr, dk, r, k)
 
     n_components = settings['n_components']
-    U = Potential(r,
-                  n_components=n_components,
-                  potentials=settings['potentials'])
+    U = TotalPotential(r,
+                       n_components=n_components,
+                       potentials=settings['potentials'])
 
     # Zero Gamma function
     # TODO: custom initial guesses for Gamma
@@ -113,14 +113,14 @@ def solve_ornstein_zernike(inputs, status_updates=True):
                                   corr=-U.erf_real[i, j])
 
         # Test for convergence.
-        norm_dsqn = squared_normed_distance(G_r, G_r_previous)
+        rms_norm = rms_normed(G_r, G_r_previous)
 
-        if norm_dsqn < settings['tol']:
+        if rms_norm < settings['tol']:
             converged = True
             break
 
         # Iterate.
-        iter_scheme = settings['iteration-scheme']
+        iter_scheme = settings['iteration_scheme']
         if iter_scheme == 'picard':
             mix = settings['mix_param']
             G_r = (1 - mix) * G_r_previous + mix * G_r
@@ -130,11 +130,11 @@ def solve_ornstein_zernike(inputs, status_updates=True):
         if status_updates:
             logger.info('   {:<8d}{:<8.2f}{:<8.2e}'.format(n_iter,
                                                         time.time() - loop_start,
-                                                        norm_dsqn))
+                                                        rms_norm))
     end = time.time()
     if converged:
         logger.info('Converged in {:.2f}s after {} iterations'.format(end-start, n_iter))
         c_r, g_r = closure(U, G_r)
         return r, g_r
-    else:
-        logger.info('Exceeded max # of iterations: {}'.format(n_iter))
+
+    raise PyozError('Exceeded max # of iterations: {}'.format(n_iter))
