@@ -8,6 +8,8 @@ import itertools as it
 import numpy as np
 import simtk.unit as u
 
+from pyoz.exceptions import PyozError
+
 
 def arithmetic(a, b):
     return 0.5 * (a + b)
@@ -74,5 +76,5 @@ class Potential(object):
                 pot_parms['sigma_ij'] = sigma_ij
                 pot_parms['epsilon_ij'] = epsilon_ij
             else:
-                raise ValueError("Unsupported potential: {}".format(pot_type))
+                raise PyozError("Unsupported potential: {}".format(pot_type))
 

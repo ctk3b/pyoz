@@ -2,7 +2,7 @@ import numpy as np
 import scipy.integrate as integrate
 
 
-def squared_normed_distance(A, B):
+def rms_normed(A, B):
     """Compute the squared and normed distance between two arrays.
 
     distance = sqrt(sum[(A - B)^2] / (n_points * n_components^2))

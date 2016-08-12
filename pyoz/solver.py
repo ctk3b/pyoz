@@ -11,12 +11,12 @@ import pyoz
 from pyoz.closure import supported_closures
 from pyoz import dft as ft
 from pyoz.exceptions import PyozError
-from pyoz.misc import squared_normed_distance
+from pyoz.misc import rms_normed
 from pyoz.potential import Potential
 
 
 def prep_input(input_dict):
-    settings = deepcopy(pyoz.settings)
+    settings = deepcopy(pyoz.defaults)
     settings.update(deepcopy(input_dict))
 
     settings['n_points'] -= 1
@@ -113,14 +113,14 @@ def solve_ornstein_zernike(inputs, status_updates=True):
                                   corr=-U.erf_real[i, j])
 
         # Test for convergence.
-        norm_dsqn = squared_normed_distance(G_r, G_r_previous)
+        norm_dsqn = rms_normed(G_r, G_r_previous)
 
         if norm_dsqn < settings['tol']:
             converged = True
             break
 
         # Iterate.
-        iter_scheme = settings['iteration-scheme']
+        iter_scheme = settings['iteration_scheme']
         if iter_scheme == 'picard':
             mix = settings['mix_param']
             G_r = (1 - mix) * G_r_previous + mix * G_r
@@ -137,4 +137,4 @@ def solve_ornstein_zernike(inputs, status_updates=True):
         c_r, g_r = closure(U, G_r)
         return r, g_r
     else:
-        logger.info('Exceeded max # of iterations: {}'.format(n_iter))
+        raise PyozError('Exceeded max # of iterations: {}'.format(n_iter))
