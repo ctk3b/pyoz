@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 from hypothesis import given
 from hypothesis.strategies import floats, tuples
 import numpy as np
@@ -20,23 +18,23 @@ def test_two_comp_picard(T, C, sig, eps):
     oz.logger.info('C=  {:8.2f}{:8.2f}'.format(*C))
     oz.logger.info('sig={:8.2f}{:8.2f}'.format(*sig))
     oz.logger.info('eps={:8.2f}{:8.2f}'.format(*eps))
-    inputs = deepcopy(oz.defaults)
-    inputs['T'] = T * u.kelvin
-    n_components = 2
-    inputs['n_components'] = n_components
-    inputs['concentrations'] = [C[0] * u.moles / u.liter,
-                                C[1] * u.moles / u.liter]
 
-    # Potential parameters.
-    lj = inputs['potentials']['lennard-jones']
-    lj['sigmas'] = [sig[0] * u.nanometers,
-                    sig[1] * u.nanometers]
-    lj['sigma_rule'] = 'arithmetic'
-    lj['epsilons'] = [eps[0] * u.kilojoules_per_mole,
-                      eps[1] * u.kilojoules_per_mole]
-    lj['epsilon_rule'] = 'geometric'
+    lj_liquid = oz.System(T=T * u.kelvin)
+    potential = oz.LennardJones(sig_rule='arithmetic', eps_rule='geometric')
 
-    r, g_r = oz.solve_ornstein_zernike(inputs, status_updates=False)
+    m = oz.Component(name='M', concentration=C[0] * u.moles / u.liter)
+    m.add_potential(potential, parameters={'sig': sig[0] * u.nanometers,
+                                           'eps': eps[0] * u.kilojoules_per_mole})
+    n = oz.Component(name='N', concentration=C[1] * u.moles / u.liter)
+    n.add_potential(potential, parameters={'sig': sig[0] * u.nanometers,
+                                           'eps': eps[0] * u.kilojoules_per_mole})
+
+    lj_liquid.add_component(m)
+    lj_liquid.add_component(n)
+
+    r, g_r = lj_liquid.solve(closure='hnc')
+
+    n_components = lj_liquid.n_components
     assert np.allclose(g_r[:, :, :10],
                        np.zeros(shape=(n_components, n_components, 10)))
     assert np.allclose(g_r[:, :, -10:],

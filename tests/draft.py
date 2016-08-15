@@ -22,7 +22,6 @@ n = Component(name='N', concentration=0.5 * u.moles / u.liter)
 n.add_potential(potential, parameters={'sig': 0.6 * u.nanometers,
                                        'eps': 0.1 * u.kilojoules_per_mole})
 
-# TODO: remove need to add potential twice
 lj_liquid.add_component(m)
 lj_liquid.add_component(n)
 

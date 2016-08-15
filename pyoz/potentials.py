@@ -73,8 +73,8 @@ class LennardJones(object):
         self.eps = OrderedDict()
         self._sig_rule = sig_rule
         self._eps_rule = eps_rule
-        self.mix_sig = mixing_functions[sig_rule]
-        self.mix_eps = mixing_functions[eps_rule]
+        self._mix_sig = mixing_functions[sig_rule]
+        self._mix_eps = mixing_functions[eps_rule]
 
         self.sig_ij = None
         self.eps_ij = None
@@ -87,7 +87,7 @@ class LennardJones(object):
     @sig_rule.setter
     def sig_rule(self, rule):
         self._sig_rule = rule
-        self.mix_sig = mixing_functions[rule]
+        self._mix_sig = mixing_functions[rule]
 
     @property
     def eps_rule(self):
@@ -96,7 +96,7 @@ class LennardJones(object):
     @eps_rule.setter
     def eps_rule(self, rule):
         self._eps_rule = rule
-        self.mix_eps = mixing_functions[rule]
+        self._mix_eps = mixing_functions[rule]
 
     def add_parms(self, component, sig, eps):
         # TODO: robust unit checking
@@ -114,8 +114,8 @@ class LennardJones(object):
         self.eps_ij = np.zeros(shape=(n_components, n_components))
         self.ij = np.zeros(shape=(n_components, n_components, r.shape[0]))
         for (i, j), _ in np.ndenumerate(self.sig_ij):
-            s = self.mix_sig(sig[i], sig[j])
-            e = self.mix_eps(eps[i], eps[j])
+            s = self._mix_sig(sig[i], sig[j])
+            e = self._mix_eps(eps[i], eps[j])
             self.sig_ij[i, j] = s
             self.eps_ij[i, j] = e
             self.ij[i, j, :] = 4 * e * ((s / r)**12 - (s / r)**6)
