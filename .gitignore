@@ -45,3 +45,8 @@ docs/_build
 Vagrantfile
 
 __conda_version__.txt
+
+# Hypothesis
+.hypothesis/*
+.hypothesis
+.cache/*

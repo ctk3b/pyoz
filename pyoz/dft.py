@@ -256,6 +256,8 @@ class dft:
 # luc's version is also present (padding the function to twice as many samples
 # with zeroes. the formal correctness of luc's code has to be checked
 
+
+# TODO: The below appears to be equivalent to scipy.fftpack.dst(r, type=1)  / 2
 def _dst(x, axis=-1):
     """Discrete Sine Transform (DST-I)
 

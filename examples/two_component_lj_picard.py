@@ -29,12 +29,11 @@ max_r = 500
 n_components = lj_liquid.n_components
 fig1, ax1 = plt.subplots()
 for mol_L in [0.5]:
-    m.concentration = mol_L * u.moles / u.liter
-    n.concentration = mol_L * u.moles / u.liter
-    r, g_r = lj_liquid.solve(closure='hnc')
-    kb = oz.compute_kirkwood_buff(r, g_r)
-    print(kb)
-
+    m.concentration = n.concentration = mol_L * u.moles / u.liter
+    lj_liquid.solve(closure='hnc')
+    kb = oz.kirkwood_buff_integrals(lj_liquid)
+    mu_ex = oz.excess_chemical_potential(lj_liquid)
+    r, g_r = lj_liquid.r, lj_liquid.g_r
     for i, j in it.product(range(n_components), range(n_components)):
         ax1.plot(r[:max_r], g_r[i, j, :max_r], label='{}{}'.format(i, j))
 

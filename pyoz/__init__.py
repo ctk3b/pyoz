@@ -8,13 +8,14 @@ import numpy as np
 
 from pyoz.core import System, Component
 from pyoz.potentials import LennardJones
-from pyoz.thermodynamic_properties import compute_kirkwood_buff
+from pyoz.thermodynamic_properties import (kirkwood_buff_integrals,
+                                           excess_chemical_potential)
 
 __all__ = ['System', 'Component',
 
            'LennardJones',
 
-           'compute_kirkwood_buff']
+           'kirkwood_buff_integrals', 'excess_chemical_potential']
 
 __version__ = '0.4.0'
 __author__ = 'Lubos Vrbka'

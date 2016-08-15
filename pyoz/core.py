@@ -36,7 +36,13 @@ class Component(object):
     @concentration.setter
     def concentration(self, c):
         # TODO: units
+        if c._value < 0:
+            raise PyozError('Concentrations must be >= 0')
         self._concentration = (c * Na).in_units_of(u.angstroms**-3)
+
+    @property
+    def n_potentials(self):
+        return len(self.potentials)
 
     def add_potential(self, potential, parameters):
         potential.add_parms(self, **parameters)
@@ -62,6 +68,7 @@ class Component(object):
 class System(object):
     def __init__(self, name='System', **kwargs):
         self.name = name
+        # TODO for #2: warning for unused kwargs
         settings = prep_input(kwargs)
         for attribute, value in settings.items():
             setattr(self, attribute, value)
@@ -69,12 +76,17 @@ class System(object):
         # TODO: units
         dr = self.dr = self.dr.value_in_unit(u.angstroms)
         dk = self.dk
-        n_points = settings['n_points']
-        self.r = np.linspace(dr, n_points * dr - dr, n_points)
-        self.k = np.linspace(dk, n_points * dk - dk, n_points)
+        self.r = np.linspace(dr, self.n_points * dr - dr, self.n_points)
+        self.k = np.linspace(dk, self.n_points * dk - dk, self.n_points)
 
         self.components = list()
         self.potentials = set()
+
+        # Results get stored after `System.solve` successfully completes.
+        self.g_r = None
+        self.h_r = None
+        self.c_r = None
+        self.G_r = None
 
     @property
     def n_components(self):
@@ -96,7 +108,7 @@ class System(object):
         n_components = self.n_components
         n_points = self.n_points
 
-        # TODO
+        # TODO: simplify and units
         concs = [comp.concentration for comp in self.components]
         dens = np.zeros(shape=(n_components, n_components))
         for (i, j), _ in np.ndenumerate(dens):
@@ -190,7 +202,10 @@ class System(object):
         if converged:
             logger.info('Converged in {:.2f}s after {} iterations'.format(end-start, n_iter))
             c_r, g_r = closure(U, G_r)
-            return self.r, g_r
+            self.g_r = g_r
+            self.h_r = g_r - 1
+            self.c_r = c_r
+            self.G_r = G_r
 
         raise PyozError('Exceeded max # of iterations: {}'.format(n_iter))
 
