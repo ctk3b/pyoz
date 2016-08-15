@@ -6,11 +6,13 @@ import simtk.unit as u
 from simtk.unit import BOLTZMANN_CONSTANT_kB as kB
 import numpy as np
 
-from pyoz.closure import supported_closures
-from pyoz.solver import solve_ornstein_zernike
+from pyoz.core import System, Component
+from pyoz.potentials import LennardJones
 from pyoz.thermodynamic_properties import compute_kirkwood_buff
 
-__all__ = ['solve_ornstein_zernike',
+__all__ = ['System', 'Component',
+
+           'LennardJones',
 
            'compute_kirkwood_buff']
 
@@ -85,19 +87,6 @@ defaults['tol'] = 1e-9
 defaults['max_iter'] = 1000
 defaults['max_dsqn'] = 100.0
 
-# Potentials
-# ==========
-defaults['potentials'] = dict()
-
-# Lennard-Jones
-lj = defaults['potentials']['lennard-jones'] = dict()
-lj['sigmas'] = 0.5 * u.nanometers
-lj['sigma_rule'] = 'arithmetic'
-lj['epsilons'] = 0.1 * u.kilojoules_per_mole
-lj['epsilon_rule'] = 'geometric'
-
 # System info
 # ===========
 defaults['closure'] = 'hnc'
-defaults['n_components'] = 1
-defaults['concentrations'] = [0.1 * u.moles / u.liter]
