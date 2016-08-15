@@ -21,15 +21,6 @@ def prep_input(inputs):
     settings.update(deepcopy(inputs))
 
     settings['n_points'] -= 1
-
-    # TODO: units
-    concs = settings['concentrations']
-    n_components = len(concs)
-    dens = np.zeros(shape=(n_components, n_components))
-    for (i, j), _ in np.ndenumerate(dens):
-        dens[i, j] = np.sqrt(concs[i]._value * concs[j]._value)
-    settings['dens'] = dens
-
     return settings
 
 
@@ -84,13 +75,16 @@ class System(object):
         self.k = np.linspace(dk, n_points * dk - dk, n_points)
 
         self.components = list()
-        self.potentials = list()
+        self.potentials = set()
+
+    @property
+    def n_components(self):
+        return len(self.components)
 
     def add_component(self, component):
         self.components.append(component)
-
-    def add_potential(self, potential):
-        self.potentials.append(potential)
+        for potential in component.potentials:
+            self.potentials.add(potential)
 
     def _apply_potentials(self):
         for potential in self.potentials:
@@ -102,6 +96,14 @@ class System(object):
         self._apply_potentials()
         n_components = self.n_components
         n_points = self.n_points
+
+        # TODO
+        concs = [comp.concentration for comp in self.components]
+        dens = np.zeros(shape=(n_components, n_components))
+        for (i, j), _ in np.ndenumerate(dens):
+            dens[i, j] = np.sqrt(concs[i]._value * concs[j]._value)
+        self.dens = dens
+
         matrix_shape = (n_components, n_components, n_points)
         dft = ft.dft(n_points, self.dr, self.dk, self.r, self.k)
 

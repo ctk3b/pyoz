@@ -91,5 +91,3 @@ defaults['max_dsqn'] = 100.0
 # System info
 # ===========
 defaults['closure'] = 'hnc'
-defaults['n_components'] = 1
-defaults['concentrations'] = [0.1 * u.moles / u.liter]
