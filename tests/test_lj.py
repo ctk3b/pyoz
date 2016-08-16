@@ -25,19 +25,18 @@ def test_two_comp_picard(T, C, sig, eps):
     m = oz.Component(name='M', concentration=C[0] * u.moles / u.liter)
     m.add_potential(potential, parameters={'sig': sig[0] * u.nanometers,
                                            'eps': eps[0] * u.kilojoules_per_mole})
+    lj_liquid.add_component(m)
     n = oz.Component(name='N', concentration=C[1] * u.moles / u.liter)
     n.add_potential(potential, parameters={'sig': sig[0] * u.nanometers,
                                            'eps': eps[0] * u.kilojoules_per_mole})
-
-    lj_liquid.add_component(m)
     lj_liquid.add_component(n)
 
-    r, g_r = lj_liquid.solve(closure='hnc')
+    lj_liquid.solve(closure='hnc')
 
     n_components = lj_liquid.n_components
-    assert np.allclose(g_r[:, :, :10],
+    assert np.allclose(lj_liquid.g_r[:, :, :10],
                        np.zeros(shape=(n_components, n_components, 10)))
-    assert np.allclose(g_r[:, :, -10:],
+    assert np.allclose(lj_liquid.g_r[:, :, -10:],
                        np.ones(shape=(n_components, n_components, 10)))
 
 if __name__ == '__main__':

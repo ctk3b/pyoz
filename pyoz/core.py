@@ -44,8 +44,12 @@ class Component(object):
     def n_potentials(self):
         return len(self.potentials)
 
+    @property
+    def parameters(self):
+        return {pot: pot.parameters[self] for pot in self.potentials}
+
     def add_potential(self, potential, parameters):
-        potential.add_parms(self, **parameters)
+        potential.add_parameters(self, **parameters)
         self.potentials.append(potential)
 
     def __repr__(self):
@@ -195,17 +199,21 @@ class System(object):
                 raise PyozError('Iteration scheme "{}" not yet '
                                 'implemented.'.format(iter_scheme))
             if status_updates:
-                logger.info('   {:<8d}{:<8.2f}{:<8.2e}'.format(n_iter,
-                                                            time.time() - loop_start,
-                                                            rms_norm))
+                time_taken = time.time() - loop_start
+                logger.info('   {:<8d}{:<8.2f}{:<8.2e}'.format(
+                    n_iter, time_taken, rms_norm)
+                )
         end = time.time()
         if converged:
-            logger.info('Converged in {:.2f}s after {} iterations'.format(end-start, n_iter))
+            logger.info('Converged in {:.2f}s after {} iterations'.format(
+                end-start, n_iter)
+            )
             c_r, g_r = closure(U, G_r)
             self.g_r = g_r
             self.h_r = g_r - 1
             self.c_r = c_r
             self.G_r = G_r
+            return
 
         raise PyozError('Exceeded max # of iterations: {}'.format(n_iter))
 

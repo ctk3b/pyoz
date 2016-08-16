@@ -63,7 +63,7 @@ def compressibility(ctrl, syst, const, r, c_sr):
       calculates isothermal compressibility and excess isothermal compressibility
     """
 
-    if (syst['dens']['totnum'] == 0.0):
+    if syst['dens']['totnum'] == 0.0:
         # infinite dilution
         chi_ex = 1.0
         chi_ex_r = 1.0

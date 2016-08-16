@@ -50,3 +50,4 @@ __conda_version__.txt
 .hypothesis/*
 .hypothesis
 .cache/*
+.cache

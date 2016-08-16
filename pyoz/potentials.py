@@ -46,11 +46,13 @@ class TotalPotential(object):
     """
     def __init__(self, r, n_components, potentials):
         n_potentials = len(potentials)
-        self.ij = np.zeros(shape=(n_components, n_components, r.shape[0]))
-        self.ij_ind = np.zeros(shape=(n_potentials, n_components, n_components, r.shape[0]))
+        matrix_shape = (n_components, n_components, r.shape[0])
+        self.ij = np.zeros(shape=matrix_shape)
+        self.ij_ind = np.zeros(shape=(n_potentials,
+                                      n_components, n_components, r.shape[0]))
 
-        self.erf_real = np.zeros(shape=(n_components, n_components, r.shape[0]))
-        self.erf_fourier = np.zeros(shape=(n_components, n_components, r.shape[0]))
+        self.erf_real = np.zeros(shape=matrix_shape)
+        self.erf_fourier = np.zeros(shape=matrix_shape)
 
         for potential in potentials:
             self.ij += potential.ij
@@ -65,6 +67,28 @@ class TotalPotential(object):
                 descr.append('+ ')
         descr.append('>')
         return ''.join(descr)
+
+
+class ContinuousPotential(object):
+    def __init__(self, form, **mixing_rules):
+        self.form = form
+        self.mixing_rules = mixing_rules
+        self._mixing_funcs = {parameter: mixing_functions[rule]
+                              for parameter, rule in mixing_rules.items()}
+        self.parameters = OrderedDict()
+
+    def add_parameters(self, component, **parameters):
+        # Maintain identical order of parameters for each component.
+        self.parameters[component] = OrderedDict(sorted(parameters.items()))
+
+    def apply(self, r, T):
+        for parms in self.parameters.values():
+            pass
+
+# class LennardJones(ContinuousPotential):
+#     def __init__(self, **mixing_rules):
+#         form = '4 * e * ((s / r)**12 - (s / r)**6)'
+#         super().__init__(form, **mixing_rules)
 
 
 class LennardJones(object):
@@ -98,7 +122,7 @@ class LennardJones(object):
         self._eps_rule = rule
         self._mix_eps = mixing_functions[rule]
 
-    def add_parms(self, component, sig, eps):
+    def add_parameters(self, component, sig, eps):
         # TODO: robust unit checking
         self.sig[component] = sig
         self.eps[component] = eps
