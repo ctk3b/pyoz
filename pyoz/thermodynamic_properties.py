@@ -8,9 +8,9 @@ def kirkwood_buff_integrals(system):
     G_ij = 4 pi \int_0^\inf [g(r)-1]r^2 dr
     """
     r, g_r = system.r, system.g_r
-    return 4.0 * np.pi * integrate.simps(y=(g_r - 1.0) * r**2,
-                                         x=r,
-                                         even='last')
+    return 4.0 * np.pi * integrate(y=(g_r - 1.0) * r**2,
+                                   x=r,
+                                   even='last')
 
 
 # TODO: double check kT
@@ -23,13 +23,14 @@ def excess_chemical_potential(system):
     Currently only the HNC approximation is supported.
 
     """
-    r, h_r, G_r, cs_r = system.r, system.h_r, system.G_r, system.cs_r
-
-    mu_ex = np.empty(shape=system.n_components)
-    for i in range(r.shape[0]):
+    # TODO: proper handling for short range c^s(r)
+    r, h_r, G_r, cs_r = system.r, system.h_r, system.G_r, system.c_r
+    n_components = system.n_components
+    mu_ex = np.empty(shape=n_components)
+    for i in range(n_components):
         mu = 0.0
-        for j in range(r.shape[0]):
-            rho_j = system.components[j].concentration
+        for j in range(n_components):
+            rho_j = system.components[j].concentration._value
             integrand = 0.5 * h_r[i, j] * G_r[i, j] - cs_r[i, j]
             mu += 4.0 * np.pi * rho_j * integrate(y=integrand * r**2,
                                                   x=r,

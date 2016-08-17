@@ -2,7 +2,7 @@ import numpy as np
 
 
 def hypernetted_chain(U, G_r):
-    """Apply the hyper-etted chains closure.
+    """Apply the hyper-netted chains closure.
 
     g_r = exp(-U) * exp(G_r)
     h_r = g_r - 1

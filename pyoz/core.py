@@ -1,5 +1,4 @@
 from copy import deepcopy
-import itertools as it
 import time
 
 import numpy as np
@@ -26,6 +25,7 @@ def prep_input(inputs):
 class Component(object):
     def __init__(self, name, concentration):
         self.name = name
+        self._concentration = None
         self.concentration = concentration
         self.potentials = list()
 
@@ -115,7 +115,7 @@ class System(object):
         # TODO: simplify and units
         concs = [comp.concentration for comp in self.components]
         dens = np.zeros(shape=(n_components, n_components))
-        for (i, j), _ in np.ndenumerate(dens):
+        for i, j in np.ndindex(dens.shape):
             dens[i, j] = np.sqrt(concs[i]._value * concs[j]._value)
         self.dens = dens
 
@@ -162,7 +162,7 @@ class System(object):
             c_r, g_r = closure(U, G_r)
 
             # Take us to fourier space.
-            for i, j in it.product(range(n_components), range(n_components)):
+            for i, j in np.ndindex(n_components, n_components):
                 Cs_k[i, j], C_k[i, j] = dft.dfbt(c_r[i, j],
                                                  norm=self.dens[i, j],
                                                  corr=-U.erf_fourier[i, j])
@@ -178,7 +178,7 @@ class System(object):
             G_k = S - E - Cs_k
 
             # Snap back to reality.
-            for i, j in it.product(range(n_components), range(n_components)):
+            for i, j in np.ndindex(n_components, n_components):
                 G_r[i, j] = dft.idfbt(G_k[i, j],
                                       norm=self.dens[i, j],
                                       corr=-U.erf_real[i, j])
