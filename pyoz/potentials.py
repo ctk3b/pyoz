@@ -1,5 +1,4 @@
 from collections import OrderedDict
-import itertools as it
 
 import numpy as np
 import simtk.unit as u
@@ -70,28 +69,61 @@ class TotalPotential(object):
 
 
 class ContinuousPotential(object):
-    def __init__(self, form, **mixing_rules):
-        self.form = form
+    def __init__(self, potential_function, **mixing_rules):
+        self.potential_function = potential_function
+        # TODO: properly implement pd.DataFrame to handle parameters
+        # TODO: robust getters/setters for changing mixing rules
+        # Currently, "robustness" is provided simply by alphabetic ordering.
         self.mixing_rules = mixing_rules
-        self._mixing_funcs = {parameter: mixing_functions[rule]
-                              for parameter, rule in mixing_rules.items()}
+        self._mixing_funcs = [mixing_functions[rule]
+                              for parameter, rule in sorted(mixing_rules.items())]
         self.parameters = OrderedDict()
+
+        self.ij = None
+
+    @property
+    def n_parameter_types(self):
+        return len(list(self.parameters.values())[0])
+
+    @property
+    def n_components(self):
+        return len(self.parameters)
 
     def add_parameters(self, component, **parameters):
         # Maintain identical order of parameters for each component.
         self.parameters[component] = OrderedDict(sorted(parameters.items()))
 
     def apply(self, r, T):
-        for parms in self.parameters.values():
-            pass
+        n_components = self.n_components
 
-# class LennardJones(ContinuousPotential):
-#     def __init__(self, **mixing_rules):
-#         form = '4 * e * ((s / r)**12 - (s / r)**6)'
-#         super().__init__(form, **mixing_rules)
+        parms = np.empty(shape=(self.n_parameter_types, n_components))
+        for comp_n, comp_parms in enumerate(self.parameters.values()):
+            for parm_n, parm in enumerate(comp_parms.values()):
+                parms[parm_n, comp_n] = parm
+
+        P_ij = np.empty(shape=(self.n_parameter_types, n_components, n_components))
+        for n, i, j in np.ndindex(P_ij.shape):
+            mixer = self._mixing_funcs[n]
+            P_ij[n, i, j] = mixer(parms[n, i], parms[n, j])
+
+        self.ij = np.zeros(shape=(n_components, n_components, r.shape[0]))
+        for i, j in np.ndindex(P_ij.shape[1:]):
+            p = P_ij[:, i, j]
+            self.ij[i, j, :] = self.potential_function(r, *p)
 
 
-class LennardJones(object):
+class LennardJones(ContinuousPotential):
+    def __init__(self, **mixing_rules):
+        def lj_func(r, e, s):
+            return 4 * e * ((s / r)**12 - (s / r)**6)
+        super().__init__(lj_func, **mixing_rules)
+
+# ========================================================= #
+# Explicit potential classes, primarily for testing purposes.
+# ========================================================= #
+
+
+class _LennardJones(object):
     def __init__(self, sig_rule='arithmetic', eps_rule='geometric'):
         self.sig = OrderedDict()
         self.eps = OrderedDict()
@@ -137,7 +169,7 @@ class LennardJones(object):
         self.sig_ij = np.zeros(shape=(n_components, n_components))
         self.eps_ij = np.zeros(shape=(n_components, n_components))
         self.ij = np.zeros(shape=(n_components, n_components, r.shape[0]))
-        for (i, j), _ in np.ndenumerate(self.sig_ij):
+        for i, j in np.ndindex(self.sig_ij.shape):
             s = self._mix_sig(sig[i], sig[j])
             e = self._mix_eps(eps[i], eps[j])
             self.sig_ij[i, j] = s
