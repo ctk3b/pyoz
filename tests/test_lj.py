@@ -1,9 +1,9 @@
 from hypothesis import given
 from hypothesis.strategies import floats, tuples
 import numpy as np
-import simtk.unit as u
 
 import pyoz as oz
+import pyoz.unit as u
 
 
 @given(T=floats(min_value=250, max_value=400),

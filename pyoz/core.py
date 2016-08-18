@@ -2,9 +2,7 @@ from copy import deepcopy
 import time
 
 import numpy as np
-import simtk.unit as u
-from simtk.unit import AVOGADRO_CONSTANT_NA as Na
-from simtk.unit import BOLTZMANN_CONSTANT_kB as kB
+
 
 import pyoz as oz
 from pyoz.closure import supported_closures
@@ -12,6 +10,8 @@ from pyoz.exceptions import PyozError
 from pyoz import dft as ft
 from pyoz.misc import rms_normed
 from pyoz.potentials import TotalPotential
+import pyoz.unit as u
+from pyoz.unit import AVOGADRO_CONSTANT_NA as Na
 
 
 def prep_input(inputs):

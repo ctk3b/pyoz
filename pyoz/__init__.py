@@ -2,18 +2,20 @@
 
 import logging
 
-import simtk.unit as u
-from simtk.unit import BOLTZMANN_CONSTANT_kB as kB
+
 import numpy as np
 
 from pyoz.core import System, Component
-from pyoz.potentials import LennardJones
+from pyoz.potentials import LennardJones, ContinuousPotential
 from pyoz.thermodynamic_properties import (kirkwood_buff_integrals,
                                            excess_chemical_potential)
+from pyoz import unit
+import pyoz.unit as u
+from pyoz.unit import BOLTZMANN_CONSTANT_kB as kB
 
-__all__ = ['System', 'Component',
+__all__ = ['System', 'Component', 'unit',
 
-           'LennardJones',
+           'ContinuousPotential', 'LennardJones',
 
            'kirkwood_buff_integrals', 'excess_chemical_potential']
 

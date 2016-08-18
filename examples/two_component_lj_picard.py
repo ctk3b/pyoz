@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import simtk.unit as u
 
 import pyoz as oz
+import pyoz.unit as u
 
 
 # Initialize a blank system and a Lennard-Jones potential with mixing rules.

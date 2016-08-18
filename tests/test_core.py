@@ -1,8 +1,8 @@
 from hypothesis import given, assume
 from hypothesis.strategies import floats, integers, text
-import simtk.unit as u
 
 import pyoz as oz
+import pyoz.unit as u
 
 
 @given(name=text(), dr=floats(), n_points=integers())

@@ -1,11 +1,11 @@
 from collections import OrderedDict
 
 import numpy as np
-import simtk.unit as u
-from simtk.unit import AVOGADRO_CONSTANT_NA as Na
-from simtk.unit import BOLTZMANN_CONSTANT_kB as kB
 
 from pyoz.exceptions import PyozError
+import pyoz.unit as u
+from pyoz.unit import AVOGADRO_CONSTANT_NA as Na
+from pyoz.unit import BOLTZMANN_CONSTANT_kB as kB
 
 
 def arithmetic(a, b):
