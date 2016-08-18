@@ -84,7 +84,7 @@ defaults['dk'] = dk
 defaults['max_k'] = dk * n_points
 
 defaults['iteration_scheme'] = 'picard'
-defaults['mix_param'] = 1.0
+defaults['mix_param'] = 0.5
 defaults['tol'] = 1e-9
 defaults['max_iter'] = 1000
 defaults['max_dsqn'] = 100.0

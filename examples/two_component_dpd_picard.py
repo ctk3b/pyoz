@@ -19,18 +19,19 @@ def dpd_func(r, a):
 potential = oz.ContinuousPotential(dpd_func, a_rule='arithmetic')
 
 # Create and add component `M` to the system.
-m = oz.Component(name='M', concentration=1000.0 * u.moles / u.liter)
-m.add_potential(potential, parameters={'a': 200 * u.kilojoules_per_mole})
+m = oz.Component(name='M', concentration=20000 / 6.022 * u.moles / u.liter)
+m.add_potential(potential, parameters={'a': 37.5 * u.kilojoules_per_mole})
 dpd_binary.add_component(m)
 
 # Create and add component `N` to the system.
-n = oz.Component(name='N', concentration=5000.0 * u.moles / u.liter)
-n.add_potential(potential, parameters={'a': 100 * u.kilojoules_per_mole})
+n = oz.Component(name='N', concentration=30000 / 6.022 * u.moles / u.liter)
+n.add_potential(potential, parameters={'a': 37.5 * u.kilojoules_per_mole})
 dpd_binary.add_component(n)
 
 dpd_binary.solve(closure='hnc')
 
 
+# Extract some results.
 fig1, ax1 = plt.subplots()
 fig2, ax2 = plt.subplots()
 max_r = 100
