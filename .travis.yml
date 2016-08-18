@@ -1,0 +1,16 @@
+language: python
+
+python:
+  - 3.4
+  - 3.5
+
+os:
+  - osx
+  - linux
+
+install:
+  - pip install .
+
+script:
+  - py.test -vs
+

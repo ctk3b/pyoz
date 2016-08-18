@@ -104,7 +104,7 @@ class System(object):
     def _apply_potentials(self):
         for potential in self.potentials:
             potential.apply(self.r, self.T)
-        self.U = TotalPotential(r=self.r, n_components=len(self.components),
+        self.U_r = TotalPotential(r=self.r, n_components=len(self.components),
                                 potentials=self.potentials)
 
     def solve(self, closure='hnc', status_updates=True):
@@ -129,8 +129,8 @@ class System(object):
             logger.info('   {}'.format(comp))
         logger.info('')
 
-        U = self.U
-        G_r = -U.erf_real
+        U_r = self.U_r
+        G_r = -U_r.erf_real
 
         # c(r) with density factor applied: C(r)
         # c(k) with density factor applied: C(k)
@@ -159,13 +159,13 @@ class System(object):
             G_r_previous = np.copy(G_r)
 
             # Apply the closure relation.
-            c_r, g_r = closure(U, G_r)
+            c_r, g_r = closure(U_r, G_r)
 
             # Take us to fourier space.
             for i, j in np.ndindex(n_components, n_components):
                 Cs_k[i, j], C_k[i, j] = dft.dfbt(c_r[i, j],
                                                  norm=self.dens[i, j],
-                                                 corr=-U.erf_fourier[i, j])
+                                                 corr=-U_r.erf_fourier[i, j])
 
             # Solve dat equation.
             A = E - dft.ft_convolution_factor * C_k
@@ -181,7 +181,7 @@ class System(object):
             for i, j in np.ndindex(n_components, n_components):
                 G_r[i, j] = dft.idfbt(G_k[i, j],
                                       norm=self.dens[i, j],
-                                      corr=-U.erf_real[i, j])
+                                      corr=-U_r.erf_real[i, j])
 
             # Test for convergence.
             rms_norm = rms_normed(G_r, G_r_previous)
@@ -208,7 +208,7 @@ class System(object):
             logger.info('Converged in {:.2f}s after {} iterations'.format(
                 end-start, n_iter)
             )
-            c_r, g_r = closure(U, G_r)
+            c_r, g_r = closure(U_r, G_r)
             self.g_r = g_r
             self.h_r = g_r - 1
             self.c_r = c_r

@@ -12,6 +12,11 @@ def rms_normed(A, B):
     return np.sqrt(distance)
 
 
+def find_nearest(array, value):
+    idx = np.abs(array - value).argmin()
+    return array[idx]
+
+
 def dotproduct(ctrl, syst, r, X_ij, Y_ij):
     """calculates the dot product of two functions X, Y discretized on N points and represented
        as square matrices at every discretization point according to
