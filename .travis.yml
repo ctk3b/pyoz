@@ -1,16 +1,21 @@
-language: python
+language: generic
 
-python:
-  - 3.4
-  - 3.5
+sudo: false
 
-os:
-  - osx
-  - linux
+
+matrix:
+  include:
+    - { os: linux, env: PYTHON_VERSION=3.4 }
+    - { os: linux, env: PYTHON_VERSION=3.5 }
+    - { os: osx, env: PYTHON_VERSION=3.4 }
+    - { os: osx, env: PYTHON_VERSION=3.5 }
 
 install:
-  - pip install .
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install md5sha1sum; fi
+    - source devtools/travis-ci/install.sh
+    - conda install -yq scipy pytest
+    - pip install hypothesis
+    - pip install -e .
 
 script:
-  - py.test -vs
-
+    - py.test -vs

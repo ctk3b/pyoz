@@ -17,10 +17,6 @@ __email__ = "cmbruns@stanford.edu"
 # package (https://pypi.python.org/pypi/simtk.unit/) and as part of OpenMM
 # (https://simtk.org/home/openmm).
 
-# When OpenMM can be imported, the unit package will be taken from there.
-# Otherwise, the implementation here will be used. This way, the
-# `parmed.unit` package can be used interchangeably with OpenMM
-
 try:
     from simtk.unit import *
 except ImportError:

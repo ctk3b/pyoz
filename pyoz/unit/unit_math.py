@@ -32,14 +32,11 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from __future__ import division, print_function, absolute_import
-from parmed.utils.six.moves import range
 
 __author__ = "Christopher M. Bruns"
 __version__ = "0.5"
 
 
-import math
-from .quantity import is_quantity
 from .unit_definitions import *
 
 ####################

@@ -18,5 +18,4 @@ if __name__ == '__main__':
           url='http://pyoz.vrbka.net/',
           license='BSD',
           packages=find_packages(),
-          install_requires=['scipy'],
           )

@@ -32,19 +32,14 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 from __future__ import division, print_function, absolute_import
-from parmed.utils.six import iterkeys
-from parmed.utils.six.moves import range
 
 __author__ = "Christopher M. Bruns"
 __version__ = "0.5"
 
 
 import math
-import sys
 from .mymatrix import MyMatrix, zeros
-from .basedimension import BaseDimension
 from .baseunit import BaseUnit
-from .standard_dimensions import *
 
 class Unit(object):
     """
@@ -104,10 +99,10 @@ class Unit(object):
         # TODO - also handle non-simple units, i.e. units with multiple BaseUnits/ScaledUnits
         assert len(self._top_base_units) == 1
         assert len(self._scaled_units) == 0
-        dimension = next(iterkeys(self._top_base_units))
+        dimension = next(iter(self._top_base_units))
         base_unit_dict = self._top_base_units[dimension]
         assert len(base_unit_dict) == 1
-        parent_base_unit = next(iterkeys(base_unit_dict))
+        parent_base_unit = next(iter(base_unit_dict))
         parent_exponent = base_unit_dict[parent_base_unit]
         new_base_unit = BaseUnit(parent_base_unit.dimension, name, symbol)
         # BaseUnit scale might be different depending on exponent
