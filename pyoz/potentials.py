@@ -99,7 +99,16 @@ class ContinuousPotential(object):
         parms = np.empty(shape=(self.n_parameter_types, n_components))
         for comp_n, comp_parms in enumerate(self.parameters.values()):
             for parm_n, parm in enumerate(comp_parms.values()):
-                parms[parm_n, comp_n] = parm
+                # TODO: robust handling for units that have both an energy
+                # and other components
+                try:  # Are we dealing with energy unit?
+                    in_kJ_per_mol = parm.in_units_of(u.kilojoules_per_mole)
+                except TypeError:
+                    unitless = parm.value_in_unit_system(u.pyoz_unit_system)
+                else:  # It's an energy unit.
+                    unitless = in_kJ_per_mol / (Na * kB * T)
+
+                parms[parm_n, comp_n] = unitless
 
         P_ij = np.empty(shape=(self.n_parameter_types, n_components, n_components))
         for n, i, j in np.ndindex(P_ij.shape):

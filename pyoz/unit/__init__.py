@@ -49,3 +49,12 @@ akma_unit_system = UnitSystem([
         kelvin_base_unit,
         mole_base_unit,
         radian_base_unit])
+
+pyoz_unit_system = UnitSystem([
+        angstrom_base_unit,
+        dalton_base_unit,
+        picosecond_base_unit,
+        elementary_charge_base_unit,
+        kelvin_base_unit,
+        mole_base_unit,
+        radian_base_unit])

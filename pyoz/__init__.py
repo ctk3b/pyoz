@@ -32,7 +32,6 @@ logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
 logger.info('pyOZ - version {:s}'.format(__version__))
-logger.info('')
 
 
 defaults = dict()
