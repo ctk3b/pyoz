@@ -23,11 +23,11 @@ def prep_input(inputs):
 
 
 class Component(object):
-    def __init__(self, name, concentration):
+    def __init__(self, name, concentration=1 * u.moles / u.liters):
         self.name = name
         self._concentration = None
         self.concentration = concentration
-        self.potentials = list()
+        self.potentials = set()
 
     @property
     def concentration(self):
@@ -46,11 +46,11 @@ class Component(object):
 
     @property
     def parameters(self):
-        return {pot: pot.parameters[self] for pot in self.potentials}
+        return {pot: pot.parameters.loc[self] for pot in self.potentials}
 
-    def add_potential(self, potential, parameters):
-        potential.add_parameters(self, **parameters)
-        self.potentials.append(potential)
+    def add_potential(self, potential, **parameters):
+        self.potentials.add(potential)
+        potential.add_component(self, **parameters)
 
     def __repr__(self):
         descr = list('<{}, '.format(self.name))
@@ -103,9 +103,9 @@ class System(object):
 
     def _apply_potentials(self):
         for potential in self.potentials:
-            potential.apply(self.r, self.T)
+            potential.apply()
         self.U_r = TotalPotential(r=self.r, n_components=len(self.components),
-                                potentials=self.potentials)
+                                  potentials=self.potentials)
 
     def solve(self, closure='hnc', status_updates=True):
         self._apply_potentials()

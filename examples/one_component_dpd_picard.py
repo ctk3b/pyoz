@@ -16,11 +16,13 @@ def dpd_func(r, a):
     dpd[:cutoff] = 0.5 * a * (1 - r[:cutoff])**2
     return dpd
 
-potential = oz.ContinuousPotential(dpd_func, a_rule='arithmetic')
+potential = oz.ContinuousPotential(system=dpd_unary,
+                                   potential_func=dpd_func,
+                                   a='arithmetic')
 
 # Create and add component `M` to the system.
 m = oz.Component(name='M', concentration=50000 / 6.022 * u.moles / u.liter)
-m.add_potential(potential, parameters={'a': 50 * u.kilojoules_per_mole})
+m.add_potential(potential, a=50 * u.kilojoules_per_mole)
 dpd_unary.add_component(m)
 
 dpd_unary.solve(closure='hnc')

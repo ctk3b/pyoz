@@ -20,15 +20,20 @@ def test_two_comp_picard(T, C, sig, eps):
     oz.logger.info('eps={:8.2f}{:8.2f}'.format(*eps))
 
     lj_liquid = oz.System(T=T * u.kelvin)
-    potential = oz.LennardJones(sig_rule='arithmetic', eps_rule='geometric')
+    potential = oz.LennardJones(system=lj_liquid,
+                                sig='arithmetic',
+                                eps='geometric')
 
     m = oz.Component(name='M', concentration=C[0] * u.moles / u.liter)
-    m.add_potential(potential, parameters={'sig': sig[0] * u.nanometers,
-                                           'eps': eps[0] * u.kilojoules_per_mole})
+    m.add_potential(potential,
+                    sig=sig[0] * u.nanometers,
+                    eps=eps[0] * u.kilojoules_per_mole)
     lj_liquid.add_component(m)
+
     n = oz.Component(name='N', concentration=C[1] * u.moles / u.liter)
-    n.add_potential(potential, parameters={'sig': sig[0] * u.nanometers,
-                                           'eps': eps[0] * u.kilojoules_per_mole})
+    n.add_potential(potential,
+                    sig=sig[0] * u.nanometers,
+                    eps=eps[0] * u.kilojoules_per_mole)
     lj_liquid.add_component(n)
 
     lj_liquid.solve(closure='hnc')

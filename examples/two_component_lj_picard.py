@@ -8,18 +8,20 @@ plt.style.use('seaborn-colorblind')
 
 # Initialize a blank system and a Lennard-Jones potential with mixing rules.
 lj_binary = oz.System()
-potential = oz.LennardJones(sig_rule='arithmetic', eps_rule='geometric')
+potential = oz.LennardJones(system=lj_binary, sig='arithmetic', eps='geometric')
 
 # Create and add component `M` to the system.
 m = oz.Component(name='M', concentration=5 * u.moles / u.liter)
-m.add_potential(potential, parameters={'sig': 0.4 * u.nanometers,
-                                       'eps': 0.1 * u.kilojoules_per_mole})
+m.add_potential(potential,
+                sig=0.4 * u.nanometers,
+                eps=0.4 * u.kilojoules_per_mole)
 lj_binary.add_component(m)
 
 # Create and add component `N` to the system.
 n = oz.Component(name='N', concentration=5 * u.moles / u.liter)
-n.add_potential(potential, parameters={'sig': 0.6 * u.nanometers,
-                                       'eps': 0.1 * u.kilojoules_per_mole})
+n.add_potential(potential,
+                sig=0.6 * u.nanometers,
+                eps=0.1 * u.kilojoules_per_mole)
 lj_binary.add_component(n)
 
 lj_binary.solve(closure='hnc')
@@ -45,7 +47,7 @@ fig1.savefig('g_r.pdf', bbox_inches='tight')
 ax2.set_xlabel('r (Å)')
 ax2.set_ylabel('U(r)')
 ax2.legend(loc='upper right')
-ax2.set_ylim((-0.06, 0.05))
+ax2.set_ylim((-0.20, 0.05))
 ax2.set_xlim((2, 12))
 fig2.savefig('U_r.pdf', bbox_inches='tight')
 
