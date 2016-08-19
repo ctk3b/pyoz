@@ -1,9 +1,12 @@
 ## Iterative Ornstein-Zernike equation solver
 
 [![Build Status](https://travis-ci.com/ctk3b/pyoz.svg?token=T2bs5CWLhhVcoq5EpoJT&branch=master)](https://travis-ci.com/ctk3b/pyoz)
+[![BSD 3-Clause](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg)](license.md)
 
-This is a continuation of the [pyOZ project](pyoz.vrbka.net) by Lubos Vrbka
+This is a continuation of the [pyOZ project](http://pyoz.vrbka.net) by Lubos Vrbka
 which was discontinued in 2009 at version 0.3.0. 
+
+### [Installation instructions](docs/installation.md)
 
 ### General features
 - [x] Bulk calculations for simple atomic/ionic systems
