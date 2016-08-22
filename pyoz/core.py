@@ -224,6 +224,8 @@ class System(object):
             if rms_norm < self.tol:
                 converged = True
                 break
+            elif np.isnan(rms_norm):
+                raise PyozError('Diverged at iteration # {}'.format(n_iter))
 
             # Iterate.
             if self.iteration_scheme == 'picard':
