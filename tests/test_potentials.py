@@ -16,8 +16,6 @@ import pyoz.unit as u
                   floats(min_value=0.001, max_value=1000),
                   floats(min_value=0.001, max_value=1000)))
 def test_custom_function(sig, eps):
-    r = np.arange(1, 100)
-    T = 300 * u.kelvin
     kJ_mol = u.kilojoules_per_mole
     J_mol = u.joules / u.mole
     kcal_mol = u.kilocalories_per_mole

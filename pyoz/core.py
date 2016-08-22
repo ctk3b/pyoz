@@ -8,7 +8,7 @@ import pyoz as oz
 from pyoz.closure import supported_closures
 from pyoz.exceptions import PyozError
 from pyoz import dft as ft
-from pyoz.misc import rms_normed
+from pyoz.misc import rms_normed, solver
 from pyoz.potentials import TotalPotential
 import pyoz.unit as u
 from pyoz.unit import AVOGADRO_CONSTANT_NA as Na
@@ -84,7 +84,6 @@ class System(object):
         self.k = np.linspace(dk, self.n_points * dk - dk, self.n_points)
 
         self.components = list()
-        self.potentials = set()
 
         # Results get stored after `System.solve` successfully completes.
         self.g_r = None
@@ -95,6 +94,10 @@ class System(object):
     @property
     def n_components(self):
         return len(self.components)
+
+    @property
+    def potentials(self):
+        return {p for c in self.components for p in c.potentials}
 
     def add_component(self, component):
         self.components.append(component)
@@ -108,16 +111,21 @@ class System(object):
                                   potentials=self.potentials)
 
     def solve(self, closure='hnc', status_updates=True):
+        self.g_r = None
+        self.h_r = None
+        self.c_r = None
+        self.G_r = None
+
         self._apply_potentials()
         n_components = self.n_components
         n_points = self.n_points
 
         # TODO: simplify and units
         concs = [comp.concentration for comp in self.components]
-        dens = np.zeros(shape=(n_components, n_components))
-        for i, j in np.ndindex(dens.shape):
-            dens[i, j] = np.sqrt(concs[i]._value * concs[j]._value)
-        self.dens = dens
+        rho = np.zeros(shape=(n_components, n_components))
+        for i, j in np.ndindex(rho.shape):
+            rho[i, j] = np.sqrt(concs[i]._value * concs[j]._value)
+        self.rho = rho
 
         matrix_shape = (n_components, n_components, n_points)
         dft = ft.dft(n_points, self.dr, self.dk, self.r, self.k)
@@ -164,15 +172,13 @@ class System(object):
             # Take us to fourier space.
             for i, j in np.ndindex(n_components, n_components):
                 Cs_k[i, j], C_k[i, j] = dft.dfbt(c_r[i, j],
-                                                 norm=self.dens[i, j],
+                                                 norm=self.rho[i, j],
                                                  corr=-U_r.erf_fourier[i, j])
 
             # Solve dat equation.
             A = E - dft.ft_convolution_factor * C_k
             B = C_k
-            H_k = np.empty_like(A)
-            for dr in range(n_points):
-                H_k[:, :, dr] = np.linalg.solve(A[:, :, dr], B[:, :, dr])
+            H_k = solver(A, B)
 
             S = E + H_k
             G_k = S - E - Cs_k
@@ -180,7 +186,7 @@ class System(object):
             # Snap back to reality.
             for i, j in np.ndindex(n_components, n_components):
                 G_r[i, j] = dft.idfbt(G_k[i, j],
-                                      norm=self.dens[i, j],
+                                      norm=self.rho[i, j],
                                       corr=-U_r.erf_real[i, j])
 
             # Test for convergence.

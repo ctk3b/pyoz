@@ -45,7 +45,7 @@ ax1.set_xlim((0, 15))
 fig1.savefig('g_r.pdf', bbox_inches='tight')
 
 ax2.set_xlabel('r (Å)')
-ax2.set_ylabel('U(r)')
+ax2.set_ylabel('U(r) (kT)')
 ax2.legend(loc='upper right')
 ax2.set_ylim((-0.20, 0.05))
 ax2.set_xlim((2, 12))

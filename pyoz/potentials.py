@@ -23,35 +23,26 @@ mixing_functions = {'arithmetic': arithmetic,
 
 
 class TotalPotential(object):
-    """Calculate the total U_ij potential.
-
-    Also stores:
-    * individual potentials which sum to the total interaction
-    * discontinuities of the individual potentials
-
-    Currently supported potentials:
-    * lennard-jones
+    """Container class for the total potential, U_ij(r).
 
     Parameters
     ----------
     r : np.ndarray, shape=(n_points,), dtype=float
+        The radii at which the potentials are evaluated.
     n_components : int
-    potentials : set
+        The number of components in the system.
+    potentials : set of ContinuousPotential
+        All potentials that make up the total potential of the system.
 
     Attributes
     ----------
     ij : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
         The total U_ij potential.
-    ij_ind : np.ndarray, shape=(n_pots, n_comps, n_comps, n_points), dtype=float
-        The individual contributions to the total potential.
 
     """
     def __init__(self, r, n_components, potentials):
-        n_potentials = len(potentials)
         matrix_shape = (n_components, n_components, r.shape[0])
         self.ij = np.zeros(shape=matrix_shape)
-        self.ij_ind = np.zeros(shape=(n_potentials,
-                                      n_components, n_components, r.shape[0]))
 
         self.erf_real = np.zeros(shape=matrix_shape)
         self.erf_fourier = np.zeros(shape=matrix_shape)
@@ -66,13 +57,22 @@ class TotalPotential(object):
         for n, pot in enumerate(self.potentials):
             descr.append('{}'.format(pot))
             if n < n_potentials - 1:
-                descr.append('+ ')
+                descr.append(' + ')
         descr.append('>')
         return ''.join(descr)
 
 
-class ContinuousPotential(object):
+class Potential(object):
+    """Base-class for all potentials.
+
+    TODO: See what else can be abstracted away from the sub-classes
     """
+    def __repr__(self):
+        return self.__class__.__name__
+
+
+class ContinuousPotential(Potential):
+    """A continuous pair potential.
 
     * We always assume that `r` is the first parameter in `potential_func`
     * When no mixing rule or cross interaction is specified for a pair, they
@@ -80,8 +80,10 @@ class ContinuousPotential(object):
 
     """
     def __init__(self, system, potential_func, **mixing_rules):
+        super().__init__()
         self.system = system
         self.potential_func = potential_func
+        # Assume that `r` is the first parameter in `potential_func`.
         self.parameter_names = [p for p in
                                 inspect.signature(potential_func).parameters][1:]
         self.n_parameters = len(self.parameter_names)
@@ -103,8 +105,6 @@ class ContinuousPotential(object):
                 )
 
         # TODO: robust getters/setters for changing mixing rules
-        # TODO: default number of mixing rules?
-        # Needs to be set when components are added
         self.mixing_rules = mixing_rules
         self._mixing_funcs = dict()
         for parm in self.parameters.columns:
@@ -149,6 +149,7 @@ class ContinuousPotential(object):
     def _reduce_units(self, parameters):
         # TODO: robust handling for units that have both an energy
         # and other components
+        reduced_parameters = dict()
         for parm_name, parm in tuple(parameters.items()):
             try:  # Are we dealing with energy unit?
                 in_kJ_per_mol = parm.in_units_of(u.kilojoules_per_mole)
@@ -158,8 +159,8 @@ class ContinuousPotential(object):
                 unitless = parm
             else:  # It's an energy unit.
                 unitless = in_kJ_per_mol / (Na * kB * self.system.T)
-            parameters[parm_name] = unitless
-        return parameters
+            reduced_parameters[parm_name] = unitless
+        return reduced_parameters
 
     def _expand_parm_ij(self):
         old_ij = np.copy(self.parm_ij)
@@ -207,15 +208,19 @@ class ContinuousPotential(object):
             p = self.parm_ij[:, i, j]
             self.ij[i, j, :] = self.potential_func(r, *p)
 
-    def __repr__(self):
-        return self.__class__.__name__
-
 
 class LennardJones(ContinuousPotential):
     def __init__(self, system, **mixing_rules):
         def lj_func(r, eps, sig):
             return 4 * eps * ((sig / r)**12 - (sig / r)**6)
         super().__init__(system=system, potential_func=lj_func, **mixing_rules)
+
+
+class Coulomb(ContinuousPotential):
+    def __init__(self, system):
+        def coulomb(r, q):
+            return q**2 / r
+        super().__init__(system=system, potential_func=coulomb, q='geometric')
 
 # ========================================================= #
 # Explicit potential classes, primarily for testing purposes.

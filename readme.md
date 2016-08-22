@@ -8,6 +8,10 @@ which was discontinued in 2009 at version 0.3.0.
 
 ### [Installation instructions](docs/installation.md)
 
+### Getting started
+
+Proper docs coming soon. In the mean time, check out the `examples` folder.
+
 ### General features
 - [x] Bulk calculations for simple atomic/ionic systems
 - [x] Simple iteration scheme (direct Picard iteration)

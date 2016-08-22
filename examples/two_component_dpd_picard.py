@@ -28,6 +28,7 @@ n = oz.Component(name='N', concentration=30000 / 6.022 * u.moles / u.liter)
 n.add_potential(potential, a=37.5 * u.kilojoules_per_mole)
 dpd_binary.add_component(n)
 
+# Add the cross interaction between `M` and `N`.
 potential.add_binary_interaction(m, n, a=43.0 * u.kilojoules_per_mole)
 
 dpd_binary.solve(closure='hnc')
@@ -50,7 +51,7 @@ ax1.legend(loc='lower right')
 fig1.savefig('g_r.pdf', bbox_inches='tight')
 
 ax2.set_xlabel('r (Å)')
-ax2.set_ylabel('g(r)')
+ax2.set_ylabel('U(r) (kT)')
 ax2.legend(loc='lower right')
 fig2.savefig('U_r.pdf', bbox_inches='tight')
 

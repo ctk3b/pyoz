@@ -1,5 +1,6 @@
 import numpy as np
-import scipy.integrate as integrate
+
+from pyoz.exceptions import PyozError
 
 
 def rms_normed(A, B):
@@ -12,51 +13,36 @@ def rms_normed(A, B):
     return np.sqrt(distance)
 
 
-def find_nearest(array, value):
-    idx = np.abs(array - value).argmin()
-    return array[idx]
+def solver(A, B):
+    H_k = np.empty_like(A)
+    n_components = A.shape[0]
+    n_points = A.shape[-1]
 
+    if n_components == 1:
+        if (A == 0.).any():
+            raise PyozError('Singular matrix, cannot invert')
+        H_k = B / A
+    elif n_components == 2:
+        A_det = A[0, 0]*A[1, 1] - A[1, 0]*A[0, 1]
+        if (A_det == 0.0).any():
+            raise PyozError('Singular matrix, cannot invert')
 
-def dotproduct(ctrl, syst, r, X_ij, Y_ij):
-    """calculates the dot product of two functions X, Y discretized on N points and represented
-       as square matrices at every discretization point according to
+        for dr in range(n_points):
+            A_inv = np.ones(shape=(2, 2,)) / A_det[dr]
+            A_inv[0, 0] *=        A[1, 1, dr]
+            A_inv[0, 1] *= -1.0 * A[0, 1, dr]
+            A_inv[1, 0] *= -1.0 * A[1, 0, dr]
+            A_inv[1, 1] *=        A[0, 0, dr]
 
-       dotprod = sum_ij [rho_i rho_j \int X_ij(r) Y_ij(r) 4 \pi r^2 dr]
-
-       with rho being constant factors stored in a square matrix of the same dimension as X(r) and Y(r)
-    """
-    dotprod = 0.0
-
-    # calculate the integrand (array product)
-    integrand = 4.0 * np.pi * X_ij * Y_ij
-
-    for i in range(syst['ncomponents']):
-        for j in range(syst['ncomponents']):
-            integrand[i, j, :] *= syst['dens']['num'][i] * syst['dens']['num'][j] * r ** 2
-            dotprod += integrate.simps(integrand[i, j], r,
-                                       dx=ctrl['deltar'], even='last')
-    return dotprod
-
-
-def interpolate_linear(val1, val2, mu):
-    """linear interpolation
-
-      val1 and val2 are values at positions x1, x2
-      target point is specified by mu
-      mu=0 => x1, mu=1 => x2
-    """
-    return val1 * (1.0 - mu) + val2 * mu
-
-
-def interpolate_cosine(val1, val2, mu):
-    """Cosine interpolation
-
-      val1 and val2 are values at positions x1, x2
-      target point is specified by mu
-      mu=0 => x1, mu=1 => x2
-    """
-    mu2 = (1.0 - np.cos(mu * np.pi)) / 2.0
-    return val1 * (1.0 - mu2) + val2 * mu2
-
+            #h[:,:,dr] = (mat(a_inv[dr]) * mat(b[:,:,dr])) / dens_factor
+            # explicitly - is faster
+            H_k[0, 0, dr] = A_inv[0, 0]*B[0, 0, dr] + A_inv[0, 1]*B[1, 0, dr]
+            H_k[0, 1, dr] = A_inv[0, 0]*B[0, 1, dr] + A_inv[0, 1]*B[1, 1, dr]
+            H_k[1, 0, dr] = A_inv[1, 0]*B[0, 0, dr] + A_inv[1, 1]*B[1, 0, dr]
+            H_k[1, 1, dr] = A_inv[1, 0]*B[0, 1, dr] + A_inv[1, 1]*B[1, 1, dr]
+    elif A.shape[0] >= 2:
+        for dr in range(n_points):
+            H_k[:, :, dr] = np.linalg.solve(A[:, :, dr], B[:, :, dr])
+    return H_k
 
 

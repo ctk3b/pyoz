@@ -6,7 +6,7 @@ import logging
 import numpy as np
 
 from pyoz.core import System, Component
-from pyoz.potentials import LennardJones, ContinuousPotential
+from pyoz.potentials import LennardJones, ContinuousPotential, Coulomb
 from pyoz.thermodynamic_properties import (kirkwood_buff_integrals,
                                            excess_chemical_potential)
 from pyoz import unit
@@ -15,7 +15,7 @@ from pyoz.unit import BOLTZMANN_CONSTANT_kB as kB
 
 __all__ = ['System', 'Component', 'unit',
 
-           'ContinuousPotential', 'LennardJones',
+           'ContinuousPotential', 'LennardJones', 'Coulomb',
 
            'kirkwood_buff_integrals', 'excess_chemical_potential']
 
