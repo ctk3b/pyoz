@@ -13,7 +13,7 @@ matrix:
 install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install md5sha1sum; fi
     - source devtools/travis-ci/install.sh
-    - conda install -yq scipy pytest pandas
+    - conda install -yq scipy pytest pandas numba
     - pip install hypothesis
     - pip install -e .
 

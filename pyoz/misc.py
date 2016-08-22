@@ -1,6 +1,15 @@
 import numpy as np
 
 from pyoz.exceptions import PyozError
+import pyoz
+try:
+    from numba import jit
+except ImportError:
+    def jit(f):
+        return f
+    pyoz.logger.warn('Unable to import `numba`. Installing `numba` will '
+                     'significantly accelerate your code:\n\n'
+                     '"conda install numba"\n\n')
 
 
 def rms_normed(A, B):
@@ -13,6 +22,7 @@ def rms_normed(A, B):
     return np.sqrt(distance)
 
 
+@jit(nopython=True)
 def solver(A, B):
     """Solve the matrix problem in fourier space.
 
