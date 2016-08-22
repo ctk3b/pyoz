@@ -31,12 +31,12 @@ Proper docs coming soon. In the mean time, check out the `examples` folder.
 ### Thermodynamic properties
 - [ ] Osmotic coefficient
 - [ ] Isothermal compressibility
-- [ ] Excess chemical potential
+- [x] Excess chemical potential
 - [x] Kirkwood-Buff factor
 
 ### Output
 - [x] Pair correlation functions g(r)
 - [x] Direct correlation functions c(r)
-- [ ] Partial structure factors S(k)
+- [x] Partial structure factors S(k)
 - [x] Pair potentials U(r)
 - [x] Total interaction potential - U(r) + indirect correlation function

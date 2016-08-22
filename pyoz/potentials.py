@@ -219,7 +219,7 @@ class LennardJones(ContinuousPotential):
 class Coulomb(ContinuousPotential):
     def __init__(self, system):
         def coulomb(r, q):
-            return q**2 / r
+            return system.bjerrum_length * q**2 / r
         super().__init__(system=system, potential_func=coulomb, q='geometric')
 
 # ========================================================= #

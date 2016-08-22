@@ -25,7 +25,7 @@ ax2.plot(r[:max_r], U_r.ij[0, 0, :max_r], lw=1.5, label='LJ only')
 
 # Add a coulomb potential and re-solve the system.
 coul = oz.Coulomb(system=unary)
-m.add_potential(coul, q=1 * u.elementary_charge)
+m.add_potential(coul, q=.5 * u.elementary_charge)
 unary.solve(closure='hnc')
 
 
@@ -41,7 +41,7 @@ fig1.savefig('g_r.pdf', bbox_inches='tight')
 
 ax2.set_xlabel('r (Å)')
 ax2.set_ylabel('U(r) (kT)')
-ax2.set_ylim((-0.20, 0.15))
+ax2.set_ylim((-0.20, 2.))
 ax2.set_xlim((2, 12))
-ax2.legend(loc='lower right')
+ax2.legend(loc='upper right')
 fig2.savefig('U_r.pdf', bbox_inches='tight')
