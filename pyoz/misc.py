@@ -1,15 +1,18 @@
-import numpy as np
+import warnings
 
-from pyoz.exceptions import PyozError
-import pyoz
 try:
     from numba import jit
 except ImportError:
-    def jit(f):
-        return f
-    pyoz.logger.warn('Unable to import `numba`. Installing `numba` will '
-                     'significantly accelerate your code:\n\n'
-                     '"conda install numba"\n\n')
+    def jit(*args, **kwargs):
+        def true_decorator(f):
+            return f
+        return true_decorator
+    warnings.warn('Unable to import `numba`. Installing `numba` will '
+                  'significantly accelerate your code:\n\n'
+                  '"conda install numba"\n\n')
+import numpy as np
+
+from pyoz.exceptions import PyozError
 
 
 def rms_normed(A, B):
