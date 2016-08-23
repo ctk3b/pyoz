@@ -17,11 +17,11 @@ but, in theory, you can also install them via pip:
 
 ```bash
 pip install scipy pandas
-pip install -e git:git://github.com/ctk3b/pyoz.git
+pip install -e git+https://github.com/ctk3b/pyoz.git#egg=pyoz
 cd src/pyoz
 ```
 
-##### Testing your installation
+#### Testing your installation
 
 The test suite uses ``pytest`` and the ``hypothesis`` plugin. You can install
 both of these packages via ``pip``:

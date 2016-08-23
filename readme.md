@@ -10,7 +10,7 @@ which was discontinued in 2009 at version 0.3.0.
 
 ### Getting started
 
-Proper docs coming soon. In the mean time, check out the `examples` folder.
+Proper docs coming soon. In the meantime, check out the `examples` folder.
 
 ### General features
 - [x] Bulk calculations for simple atomic/ionic systems
