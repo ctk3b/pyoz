@@ -2,26 +2,29 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyoz as oz
-import pyoz.unit as u
 
 plt.style.use('seaborn-colorblind')
 
+T = 200
+sig1 = 4.0
+eps1 = 100 / T
+sig2 = 6.0
+eps2 = 25 / T
+rho1 = 0.3 / sig1**3
+rho2 = 0.3 / sig2**3
+
 # Initialize a blank system and a Lennard-Jones potential with mixing rules.
-lj_binary = oz.System()
+lj_binary = oz.System(T=T)
 potential = oz.LennardJones(system=lj_binary, sig='arithmetic', eps='geometric')
 
 # Create and add component `M` to the system.
-m = oz.Component(name='M', concentration=5 * u.moles / u.liter)
-m.add_potential(potential,
-                sig=0.4 * u.nanometers,
-                eps=0.4 * u.kilojoules_per_mole)
+m = oz.Component(name='M', concentration=rho1)
+m.add_potential(potential, sig=sig1, eps=eps1)
 lj_binary.add_component(m)
 
 # Create and add component `N` to the system.
-n = oz.Component(name='N', concentration=5 * u.moles / u.liter)
-n.add_potential(potential,
-                sig=0.6 * u.nanometers,
-                eps=0.1 * u.kilojoules_per_mole)
+n = oz.Component(name='N', concentration=rho2)
+n.add_potential(potential, sig=sig2, eps=eps2)
 lj_binary.add_component(n)
 
 lj_binary.solve(closure='hnc')
@@ -47,7 +50,7 @@ fig1.savefig('g_r.pdf', bbox_inches='tight')
 ax2.set_xlabel('r (Å)')
 ax2.set_ylabel('U(r) (kT)')
 ax2.legend(loc='upper right')
-ax2.set_ylim((-0.20, 0.05))
+ax2.set_ylim((-0.50, 0.10))
 ax2.set_xlim((2, 12))
 fig2.savefig('U_r.pdf', bbox_inches='tight')
 

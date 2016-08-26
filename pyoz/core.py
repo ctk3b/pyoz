@@ -1,4 +1,3 @@
-from copy import deepcopy
 import time
 
 import numpy as np
@@ -8,23 +7,14 @@ import pyoz as oz
 from pyoz.closure import supported_closures
 from pyoz.exceptions import PyozError
 from pyoz import dft as ft
-from pyoz.misc import rms_normed, solver
+from pyoz.misc import rms_normed, solver, picard_iteration
 from pyoz.potentials import TotalPotential
 import pyoz.unit as u
-from pyoz.unit import AVOGADRO_CONSTANT_NA as Na
 from pyoz.unit import BOLTZMANN_CONSTANT_kB as kB
 
 
-def prep_input(inputs):
-    settings = deepcopy(oz.defaults)
-    settings.update(deepcopy(inputs))
-
-    settings['n_points'] -= 1
-    return settings
-
-
 class Component(object):
-    def __init__(self, name, concentration=1 * u.moles / u.liters):
+    def __init__(self, name, concentration=0.1):
         self.name = name
         self._concentration = None
         self.concentration = concentration
@@ -37,9 +27,9 @@ class Component(object):
     @concentration.setter
     def concentration(self, c):
         # TODO: units
-        if c._value < 0:
+        if c < 0:
             raise PyozError('Concentrations must be >= 0')
-        self._concentration = (c * Na).in_units_of(u.angstroms**-3)
+        self._concentration = c
 
     @property
     def n_potentials(self):
@@ -55,8 +45,8 @@ class Component(object):
 
     def __repr__(self):
         descr = list('<{}, '.format(self.name))
-        descr.append('rho: {}, '.format(
-            self.concentration.format('%8.8f')))
+        descr.append('rho: {:8.8f}, '.format(
+            self.concentration))
         descr.append('potentials:')
         if self.potentials:
             n_potentials = len(self.potentials)
@@ -76,11 +66,11 @@ class System(object):
 
         # Physical Constants
         # ==================
-        self.T = kwargs.get('T') or 300 * u.kelvin
+        self.T = kwargs.get('T') or 300
         self.eps_r = kwargs.get('eps_r') or 78.3 * u.dimensionless
         self.eps_0 = (kwargs.get('eps_0') or
                       8.854187817e-12 * u.farad / u.meter)
-        self.kT = self.T * kB
+        self.kT = self.T *u.kelvin * kB
 
         # Coulomb interaction factor - Bjerrum length
         # V(coul) in kT is then calculated as V = b_l * z1 * z2 / r
@@ -92,11 +82,12 @@ class System(object):
         # Algorithm control
         # =================
         n_points_exp = kwargs.get('n_points_exp') or 12
-        self.n_points = 2**n_points_exp - 1
+        self.n_points = kwargs.get('n_points') or 2**n_points_exp
+        self.n_points -= 1
 
-        self.dr = kwargs.get('dr') or 0.05 * u.angstrom
+        self.dr = kwargs.get('dr') or 0.05
 
-        max_r = self.dr.value_in_unit(u.angstrom) * self.n_points
+        max_r = self.dr * self.n_points
         self.dk = np.pi / max_r
 
         self.iteration_scheme = kwargs.get('iteration_scheme') or 'picard'
@@ -110,7 +101,7 @@ class System(object):
         self.closure = kwargs.get('closure') or 'hnc'
 
         # TODO: units
-        dr = self.dr = self.dr.value_in_unit(u.angstroms)
+        dr = self.dr
         dk = self.dk
         self.r = np.linspace(dr, self.n_points * dr - dr, self.n_points)
         self.k = np.linspace(dk, self.n_points * dk - dk, self.n_points)
@@ -154,18 +145,19 @@ class System(object):
         concs = [comp.concentration for comp in self.components]
         rho = np.zeros(shape=(n_components, n_components))
         for i, j in np.ndindex(rho.shape):
-            rho[i, j] = np.sqrt(concs[i]._value * concs[j]._value)
+            rho[i, j] = np.sqrt(concs[i] * concs[j])
         self.rho = rho
 
         matrix_shape = (n_components, n_components, n_points)
         dft = ft.dft(n_points, self.dr, self.dk, self.r, self.k)
 
         logger = oz.logger
-        logger.info('Initialized: {}'.format(self))
-        logger.info('Components:')
-        for comp in self.components:
-            logger.info('   {}'.format(comp))
-        logger.info('')
+        if status_updates:
+            logger.info('Initialized: {}'.format(self))
+            logger.info('Components:')
+            for comp in self.components:
+                logger.info('   {}'.format(comp))
+            logger.info('')
 
         U_r = self.U_r
         G_r = -U_r.erf_real
@@ -186,8 +178,8 @@ class System(object):
         n_iter = 0
         start = time.time()
 
-        logger.info('Starting iteration...')
         if status_updates:
+            logger.info('Starting iteration...')
             logger.info('   {:8s}{:10s}{:10s}'.format(
                 'step', 'time (s)', 'error'))
         while not converged and n_iter < self.max_iter:
@@ -229,8 +221,7 @@ class System(object):
 
             # Iterate.
             if self.iteration_scheme == 'picard':
-                mix = self.mix_param
-                G_r = (1 - mix) * G_r_previous + mix * G_r
+                G_r = picard_iteration(G_r, G_r_previous, self.mix_param)
             else:
                 raise PyozError('Iteration scheme "{}" not yet '
                                 'implemented.'.format(self.iteration_scheme))

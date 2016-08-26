@@ -1,2 +1,1 @@
-Units are converted to angstroms and kT internally.
-
+All input units are expected in angstroms and kT

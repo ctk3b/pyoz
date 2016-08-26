@@ -1,15 +1,19 @@
 import matplotlib.pyplot as plt
 
 import pyoz as oz
-import pyoz.unit as u
 
 plt.style.use('seaborn-colorblind')
+
+T = 119.8
+sigma = 3.405
+epsilon = 119.8 / T
+rho = 0.01 / sigma**3
 
 # Initialize a blank system and a Lennard-Jones potential with mixing rules.
 unary = oz.System()
 lj = oz.LennardJones(system=unary, sig='arithmetic', eps='geometric')
-m = oz.Component(name='M', concentration=5 * u.moles / u.liter)
-m.add_potential(lj, sig=0.4 * u.nanometers, eps=0.4 * u.kilojoules_per_mole)
+m = oz.Component(name='M', concentration=rho)
+m.add_potential(lj, sig=sigma, eps=epsilon)
 unary.add_component(m)
 unary.solve(closure='hnc')
 
@@ -25,7 +29,7 @@ ax2.plot(r[:max_r], U_r.ij[0, 0, :max_r], lw=1.5, label='LJ only')
 
 # Add a coulomb potential and re-solve the system.
 coul = oz.Coulomb(system=unary)
-m.add_potential(coul, q=.5 * u.elementary_charge)
+m.add_potential(coul, q=.5)
 unary.solve(closure='hnc')
 
 

@@ -130,37 +130,20 @@ class ContinuousPotential(Potential):
                             'Potential requires parameters "{}".'.format(
                 provided_parms, required_parms)
             )
-        reduced_parameters = self._reduce_units(parameters)
-        self.parameters.loc[component] = reduced_parameters
+        self.parameters.loc[component] = parameters
 
         # TODO: less disguting method to expand this array
         if self.n_components > 1:
             self._expand_parm_ij()
 
         component_idx = self._component_idx(component)
-        for parm, value in reduced_parameters.items():
+        for parm, value in parameters.items():
             parm_idx = self._parameter_idx(parm)
             self.parm_ij[parm_idx, component_idx, component_idx] = value
             if self.mixing_rules and self.n_components > 1:
                 self._apply_mixing_rules(parm, parm_idx)
 
         component.potentials.add(self)
-
-    def _reduce_units(self, parameters):
-        # TODO: robust handling for units that have both an energy
-        # and other components
-        reduced_parameters = dict()
-        for parm_name, parm in tuple(parameters.items()):
-            try:  # Are we dealing with energy unit?
-                in_kJ_per_mol = parm.in_units_of(u.kilojoules_per_mole)
-            except TypeError:
-                unitless = parm.value_in_unit_system(u.pyoz_unit_system)
-            except AttributeError:
-                unitless = parm
-            else:  # It's an energy unit.
-                unitless = in_kJ_per_mol / (Na * kB * self.system.T)
-            reduced_parameters[parm_name] = unitless
-        return reduced_parameters
 
     def _expand_parm_ij(self):
         old_ij = np.copy(self.parm_ij)
@@ -191,10 +174,9 @@ class ContinuousPotential(Potential):
             raise PyozError('Components must be added to the potential before '
                             'adding a binary interaction between them.')
 
-        reduced_parameters = self._reduce_units(parameters)
         comp1_idx = self._component_idx(comp1)
         comp2_idx = self._component_idx(comp2)
-        for parm, value in reduced_parameters.items():
+        for parm, value in parameters.items():
             parm_idx = self._parameter_idx(parm)
             self.parm_ij[parm_idx, comp1_idx, comp2_idx] = value
             self.parm_ij[parm_idx, comp2_idx, comp1_idx] = value

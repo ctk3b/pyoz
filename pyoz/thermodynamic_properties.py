@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.integrate import simps as integrate
 
+from pyoz.unit import BOLTZMANN_CONSTANT_kB as kB
+
 
 def kirkwood_buff_integrals(system):
     """Compute the Kirkwood-Buff integrals.
@@ -11,6 +13,24 @@ def kirkwood_buff_integrals(system):
     return 4.0 * np.pi * integrate(y=(g_r - 1.0) * r**2,
                                    x=r,
                                    even='last')
+
+
+# TODO: generalize for multi-component
+def pressure_virial(system):
+    r, g_r, U_r, rho, T = system.r, system.g_r, system.U_r, system.rho, system.T
+    if g_r.shape[0] != 1:
+        raise NotImplementedError('Pressure calculation not yet implemented '
+                                  'for multi-component systems.')
+    min_r = 50
+    U_r = np.squeeze(U_r.ij)
+    g_r = np.squeeze(g_r)[min_r:-1]
+    rho = np.squeeze(rho)
+    dr = r[1] - r[0]
+    dUdr = (np.diff(U_r) / dr)[min_r:]
+    r = r[min_r:-1]
+
+    integral = integrate(y=r**3 * g_r * dUdr, x=r)
+    return rho - 2/3 * np.pi * rho**2 * integral
 
 
 # TODO: double check kT
@@ -30,7 +50,7 @@ def excess_chemical_potential(system):
     for i in range(n_components):
         mu = 0.0
         for j in range(n_components):
-            rho_j = system.components[j].concentration._value
+            rho_j = system.components[j].concentration
             integrand = 0.5 * h_r[i, j] * G_r[i, j] - cs_r[i, j]
             mu += 4.0 * np.pi * rho_j * integrate(y=integrand * r**2,
                                                   x=r,

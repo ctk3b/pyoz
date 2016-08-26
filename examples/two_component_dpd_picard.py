@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyoz as oz
-import pyoz.unit as u
 
 plt.style.use('seaborn-colorblind')
 
@@ -19,17 +18,17 @@ def dpd_func(r, a):
 potential = oz.ContinuousPotential(system=dpd_binary, potential_func=dpd_func)
 
 # Create and add component `M` to the system.
-m = oz.Component(name='M', concentration=20000 / 6.022 * u.moles / u.liter)
-m.add_potential(potential, a=37.5 * u.kilojoules_per_mole)
+m = oz.Component(name='M', concentration=2)
+m.add_potential(potential, a=15)
 dpd_binary.add_component(m)
 
 # Create and add component `N` to the system.
-n = oz.Component(name='N', concentration=30000 / 6.022 * u.moles / u.liter)
-n.add_potential(potential, a=37.5 * u.kilojoules_per_mole)
+n = oz.Component(name='N', concentration=3)
+n.add_potential(potential, a=15)
 dpd_binary.add_component(n)
 
 # Add the cross interaction between `M` and `N`.
-potential.add_binary_interaction(m, n, a=43.0 * u.kilojoules_per_mole)
+potential.add_binary_interaction(m, n, a=17.0)
 
 dpd_binary.solve(closure='hnc')
 

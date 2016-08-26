@@ -4,6 +4,7 @@ try:
     from numba import jit
 except ImportError:
     def jit(*args, **kwargs):
+        """Dummy decorator that does nothing. """
         def true_decorator(f):
             return f
         return true_decorator
@@ -29,7 +30,7 @@ def rms_normed(A, B):
 def solver(A, B):
     """Solve the matrix problem in fourier space.
 
-    Note that the convolution theorem involves a constant factor ('ff')
+    Note that the convolution theorem involves a constant factor
     depending on the forward fourier transform normalization constant.
 
     H = C + ff CH
@@ -47,7 +48,7 @@ def solver(A, B):
         H_k = B / A
     elif n_components == 2:
         H_k = np.empty_like(A)
-        A_det = A[0, 0]*A[1, 1] - A[1, 0]*A[0, 1]
+        A_det = A[0, 0] * A[1, 1] - A[1, 0] * A[0, 1]
         if (A_det == 0.0).any():
             raise PyozError('Singular matrix, cannot invert')
 
@@ -70,4 +71,7 @@ def solver(A, B):
             H_k[:, :, dr] = np.linalg.solve(A[:, :, dr], B[:, :, dr])
     return H_k
 
+
+def picard_iteration(G_r, G_r_previous, mix):
+    return (1 - mix) * G_r_previous + mix * G_r
 

@@ -5,14 +5,16 @@ import logging
 from pyoz.core import System, Component
 from pyoz.potentials import LennardJones, ContinuousPotential, Coulomb
 from pyoz.thermodynamic_properties import (kirkwood_buff_integrals,
-                                           excess_chemical_potential)
+                                           excess_chemical_potential,
+                                           pressure_virial)
 from pyoz import unit
 
 __all__ = ['System', 'Component', 'unit',
 
            'ContinuousPotential', 'LennardJones', 'Coulomb',
 
-           'kirkwood_buff_integrals', 'excess_chemical_potential']
+           'kirkwood_buff_integrals', 'excess_chemical_potential',
+           'pressure_virial']
 
 __version__ = '0.4.0'
 __author__ = 'Lubos Vrbka'

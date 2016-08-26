@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyoz as oz
-import pyoz.unit as u
 
 plt.style.use('seaborn-colorblind')
 
@@ -21,8 +20,8 @@ potential = oz.ContinuousPotential(system=dpd_unary,
                                    a='arithmetic')
 
 # Create and add component `M` to the system.
-m = oz.Component(name='M', concentration=50000 / 6.022 * u.moles / u.liter)
-m.add_potential(potential, a=50 * u.kilojoules_per_mole)
+m = oz.Component(name='M', concentration=5)
+m.add_potential(potential, a=50)
 dpd_unary.add_component(m)
 
 dpd_unary.solve(closure='hnc')
