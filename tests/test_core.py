@@ -4,20 +4,19 @@ import pytest
 
 import pyoz as oz
 from pyoz.exceptions import PyozError
-import pyoz.unit as u
 
 
 @given(name=text(), dr=floats(), n_points=integers())
 def test_init_system(name, dr, n_points):
-    assume(dr > 0)
+    assume(dr > 0.00001)
     assume(0 < n_points < 8192)
-    oz.System(name=name, dr=dr * u.nanometers, n_points=n_points)
+    oz.System(name=name, dr=dr, n_points=n_points)
 
 
 @given(name=text(), concentration=floats())
 def test_init_component(name, concentration):
     assume(concentration >= 0)
-    oz.Component(name=name, concentration=concentration * u.moles / u.liters)
+    oz.Component(name=name, concentration=concentration)
 
 
 @given(n_potentials=integers())
@@ -27,9 +26,7 @@ def test_add_potential(n_potentials):
     syst = oz.System()
 
     for _ in range(n_potentials):
-        comp.add_potential(oz.LennardJones(system=syst),
-                           sig=0.1 * u.nanometers,
-                           eps=0.2 * u.kilojoules_per_mole)
+        comp.add_potential(oz.LennardJones(system=syst), sig=1, eps=0.8)
     assert comp.n_potentials == n_potentials
 
 

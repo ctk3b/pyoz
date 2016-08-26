@@ -91,7 +91,7 @@ class System(object):
         self.dk = np.pi / max_r
 
         self.iteration_scheme = kwargs.get('iteration_scheme') or 'picard'
-        self.mix_param = kwargs.get('mix_param') or 0.5
+        self.mix_param = kwargs.get('mix_param') or 0.8
         self.tol = kwargs.get('tol') or 1e-9
         self.max_iter = kwargs.get('max_iter') or 1000
         self.max_dsqn = kwargs.get('max_dsqn') or 100.0

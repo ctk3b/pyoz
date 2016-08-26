@@ -5,8 +5,6 @@ import pytest
 
 import pyoz as oz
 from pyoz.exceptions import PyozError
-from pyoz.potentials import _LennardJones
-import pyoz.unit as u
 
 
 @given(sig=tuples(floats(min_value=0.001, max_value=1000),
@@ -16,10 +14,6 @@ import pyoz.unit as u
                   floats(min_value=0.001, max_value=1000),
                   floats(min_value=0.001, max_value=1000)))
 def test_custom_function(sig, eps):
-    kJ_mol = u.kilojoules_per_mole
-    J_mol = u.joules / u.mole
-    kcal_mol = u.kilocalories_per_mole
-
     c1 = oz.Component('1')
     c2 = oz.Component('2')
     c3 = oz.Component('3')
@@ -32,27 +26,19 @@ def test_custom_function(sig, eps):
 
     U_cont = oz.ContinuousPotential(system=lj, potential_func=lj_func,
                                     sig='arithmetic', eps='geometric')
-    U_cont.add_component(c1, sig=0.1 * sig[0] * u.nanometers, eps=eps[0] * kcal_mol)
-    U_cont.add_component(c2, sig=0.1 * sig[1] * u.nanometers, eps=eps[1] * kcal_mol)
-    U_cont.add_component(c3, sig=0.1 * sig[2] * u.nanometers, eps=eps[2] * kcal_mol)
+    U_cont.add_component(c1, sig=sig[0], eps=eps[0])
+    U_cont.add_component(c2, sig=sig[1], eps=eps[1])
+    U_cont.add_component(c3, sig=sig[2], eps=eps[2])
     U_cont.apply()
 
     # Subclassed ContinuousPotential.
     U_sub = oz.LennardJones(system=lj, sig='arithmetic', eps='geometric')
-    U_sub.add_component(c1, sig=100 * sig[0] * u.picometers, eps=4184 * eps[0] * J_mol)
-    U_sub.add_component(c2, sig=100 * sig[1] * u.picometers, eps=4184 * eps[1] * J_mol)
-    U_sub.add_component(c3, sig=100 * sig[2] * u.picometers, eps=4184 * eps[2] * J_mol)
+    U_sub.add_component(c1, sig=sig[0], eps=eps[0])
+    U_sub.add_component(c2, sig=sig[1], eps=eps[1])
+    U_sub.add_component(c3, sig=sig[2], eps=eps[2])
     U_sub.apply()
 
-    # Hardcoded LennardJones, primarily for testing purposes.
-    U_lj = _LennardJones(system=lj)
-    U_lj.add_component(c1, sig=sig[0] * u.angstrom, eps=4.184 * eps[0] * kJ_mol)
-    U_lj.add_component(c2, sig=sig[1] * u.angstrom, eps=4.184 * eps[1] * kJ_mol)
-    U_lj.add_component(c3, sig=sig[2] * u.angstrom, eps=4.184 * eps[2] * kJ_mol)
-    U_lj.apply()
-
-    assert np.allclose(U_lj.ij, U_cont.ij, equal_nan=True)
-    assert np.allclose(U_lj.ij, U_sub.ij, equal_nan=True)
+    assert np.allclose(U_sub.ij, U_cont.ij, equal_nan=True)
 
 
 def test_add_binary_interaction():
