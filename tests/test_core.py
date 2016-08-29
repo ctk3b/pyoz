@@ -8,8 +8,8 @@ from pyoz.exceptions import PyozError
 
 @given(name=text(), dr=floats(), n_points=integers())
 def test_init_system(name, dr, n_points):
-    assume(dr > 0.00001)
-    assume(0 < n_points < 8192)
+    assume(dr > 0)
+    assume(1 < n_points < 8192)
     oz.System(name=name, dr=dr, n_points=n_points)
 
 
