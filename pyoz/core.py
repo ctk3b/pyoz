@@ -14,22 +14,22 @@ from pyoz.unit import BOLTZMANN_CONSTANT_kB as kB
 
 
 class Component(object):
-    def __init__(self, name, concentration=0.1):
+    def __init__(self, name, rho=0.1):
         self.name = name
-        self._concentration = None
-        self.concentration = concentration
+        self._rho = None
+        self.rho = rho
         self.potentials = set()
 
     @property
-    def concentration(self):
-        return self._concentration
+    def rho(self):
+        return self._rho
 
-    @concentration.setter
-    def concentration(self, c):
+    @rho.setter
+    def rho(self, c):
         # TODO: units
         if c < 0:
             raise PyozError('Concentrations must be >= 0')
-        self._concentration = c
+        self._rho = c
 
     @property
     def n_potentials(self):
@@ -46,7 +46,7 @@ class Component(object):
     def __repr__(self):
         descr = list('<{}, '.format(self.name))
         descr.append('rho: {:8.8f}, '.format(
-            self.concentration))
+            self.rho))
         descr.append('potentials:')
         if self.potentials:
             n_potentials = len(self.potentials)
@@ -70,7 +70,7 @@ class System(object):
         self.eps_r = kwargs.get('eps_r') or 78.3 * u.dimensionless
         self.eps_0 = (kwargs.get('eps_0') or
                       8.854187817e-12 * u.farad / u.meter)
-        self.kT = self.T *u.kelvin * kB
+        self.kT = self.T * u.kelvin * kB
 
         # Coulomb interaction factor - Bjerrum length
         # V(coul) in kT is then calculated as V = b_l * z1 * z2 / r
@@ -90,11 +90,7 @@ class System(object):
         max_r = self.dr * self.n_points
         self.dk = np.pi / max_r
 
-        self.iteration_scheme = kwargs.get('iteration_scheme') or 'picard'
-        self.mix_param = kwargs.get('mix_param') or 0.8
-        self.tol = kwargs.get('tol') or 1e-9
-        self.max_iter = kwargs.get('max_iter') or 1000
-        self.max_dsqn = kwargs.get('max_dsqn') or 100.0
+
 
         # System info
         # ===========
@@ -134,7 +130,9 @@ class System(object):
         self.U_r = TotalPotential(r=self.r, n_components=len(self.components),
                                   potentials=self.potentials)
 
-    def solve(self, closure='hnc', status_updates=True):
+    def solve(self, closure='hnc', initial_G_r=None, status_updates=True,
+              iteration_scheme='picard', mix_param=0.8, tol=1e-9,
+              max_iter=1000):
         self.g_r = self.h_r = self.c_r = self.G_r = self.S_k = None
 
         self._apply_potentials()
@@ -142,7 +140,7 @@ class System(object):
         n_points = self.n_points
 
         # TODO: simplify and units
-        concs = [comp.concentration for comp in self.components]
+        concs = [comp.rho for comp in self.components]
         rho = np.zeros(shape=(n_components, n_components))
         for i, j in np.ndindex(rho.shape):
             rho[i, j] = np.sqrt(concs[i] * concs[j])
@@ -160,7 +158,10 @@ class System(object):
             logger.info('')
 
         U_r = self.U_r
-        G_r = -U_r.erf_real
+        if initial_G_r is None:
+            G_r = -U_r.erf_real
+        else:
+            G_r = initial_G_r
 
         # c(r) with density factor applied: C(r)
         # c(k) with density factor applied: C(k)
@@ -182,7 +183,7 @@ class System(object):
             logger.info('Starting iteration...')
             logger.info('   {:8s}{:10s}{:10s}'.format(
                 'step', 'time (s)', 'error'))
-        while not converged and n_iter < self.max_iter:
+        while not converged and n_iter < max_iter:
             loop_start = time.time()
             n_iter += 1
             total_iter += 1
@@ -190,6 +191,7 @@ class System(object):
 
             # Apply the closure relation.
             c_r, g_r = closure(U_r, G_r)
+
 
             # Take us to fourier space.
             for i, j in np.ndindex(n_components, n_components):
@@ -201,8 +203,9 @@ class System(object):
             A = E - dft.ft_convolution_factor * C_k
             B = C_k
             H_k = solver(A, B)
-            S_k = E + H_k
-            G_k = S_k - E - Cs_k
+            S_k = 1 + H_k
+            G_k = H_k - Cs_k
+
 
             # Snap back to reality.
             for i, j in np.ndindex(n_components, n_components):
@@ -213,18 +216,18 @@ class System(object):
             # Test for convergence.
             rms_norm = rms_normed(G_r, G_r_previous)
 
-            if rms_norm < self.tol:
+            if rms_norm < tol:
                 converged = True
                 break
             elif np.isnan(rms_norm):
                 raise PyozError('Diverged at iteration # {}'.format(n_iter))
 
             # Iterate.
-            if self.iteration_scheme == 'picard':
-                G_r = picard_iteration(G_r, G_r_previous, self.mix_param)
+            if iteration_scheme == 'picard':
+                G_r = picard_iteration(G_r, G_r_previous, mix_param)
             else:
                 raise PyozError('Iteration scheme "{}" not yet '
-                                'implemented.'.format(self.iteration_scheme))
+                                'implemented.'.format(iteration_scheme))
             if status_updates:
                 time_taken = time.time() - loop_start
                 logger.info('   {:<8d}{:<8.2f}{:<8.2e}'.format(
@@ -232,15 +235,20 @@ class System(object):
                 )
         end = time.time()
         if converged:
-            logger.info('Converged in {:.2f}s after {} iterations'.format(
-                end-start, n_iter)
-            )
+            # Set before error so you can still extract info if unphysical.
             c_r, g_r = closure(U_r, G_r)
             self.g_r = g_r
             self.h_r = g_r - 1
             self.c_r = c_r
             self.G_r = G_r
             self.S_k = S_k
+
+            if (S_k < 0).any():
+                raise PyozError('Converged to unphysical result.')
+
+            logger.info('Converged in {:.2f}s after {} iterations'.format(
+                end-start, n_iter)
+            )
             return
 
         raise PyozError('Exceeded max # of iterations: {}'.format(n_iter))
