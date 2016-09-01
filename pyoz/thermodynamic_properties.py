@@ -17,6 +17,11 @@ def kirkwood_buff_integrals(system):
 
 # TODO: generalize for multi-component
 def pressure_virial(system):
+    """Compute the pressure via the virial route
+
+    P = \rho * \beta - 2/3 * pi * int_0^inf [(r*dU/dr) * g(r) * r^2]dr
+
+    """
     r, g_r, U_r, rho, T = system.r, system.g_r, system.U_r, system.rho, system.T
     if g_r.shape[0] != 1:
         raise NotImplementedError('Pressure calculation not yet implemented '
@@ -30,7 +35,7 @@ def pressure_virial(system):
     r = r[min_r:-1]
 
     integral = integrate(y=r**3 * g_r * dUdr, x=r)
-    return rho - 2/3 * np.pi * rho**2 * integral
+    return rho*system.T_red - 2/3 * np.pi * rho**2 * integral
 
 
 # TODO: double check kT
@@ -50,13 +55,25 @@ def excess_chemical_potential(system):
     for i in range(n_components):
         mu = 0.0
         for j in range(n_components):
-            rho_j = system.components[j].concentration
+            rho_j = system.components[j].rho
             integrand = 0.5 * h_r[i, j] * G_r[i, j] - cs_r[i, j]
             mu += 4.0 * np.pi * rho_j * integrate(y=integrand * r**2,
                                                   x=r,
                                                   even='last')
         mu_ex[i] = mu
     return mu_ex
+
+
+def second_virial_coefficient(system):
+    r, U_r, T = system.r, system.U_r.ij, system.T_red
+    return -2 * np.pi * integrate(y=(np.exp(-U_r / T) - 1) * r**2, x=r)
+
+
+def isothermal_compressibility(system):
+    if system.r.shape[0] > 1:
+        raise NotImplementedError('Compressibility calculation not yet '
+                                  'implemented for multi-component systems.')
+    return system.S_k[0] / system.components[0].rho / system.T_red
 
 
 def activity_coefficient(system):
