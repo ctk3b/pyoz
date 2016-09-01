@@ -16,7 +16,7 @@ def test_init_system(name, dr, n_points):
 @given(name=text(), concentration=floats())
 def test_init_component(name, concentration):
     assume(concentration >= 0)
-    oz.Component(name=name, concentration=concentration)
+    oz.Component(name=name, rho=concentration)
 
 
 @given(n_potentials=integers())

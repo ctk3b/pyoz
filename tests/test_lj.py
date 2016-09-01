@@ -27,11 +27,11 @@ def test_two_comp_picard():
                                 sig='arithmetic',
                                 eps='geometric')
 
-    m = oz.Component(name='M', concentration=C[0] / sig[0]**3)
+    m = oz.Component(name='M', rho=C[0] / sig[0] ** 3)
     m.add_potential(potential, sig=sig[0], eps=eps[0] / T)
     lj_liquid.add_component(m)
 
-    n = oz.Component(name='N', concentration=C[1] / sig[1]**3)
+    n = oz.Component(name='N', rho=C[1] / sig[1] ** 3)
     n.add_potential(potential, sig=sig[1], eps=eps[1] / T)
     lj_liquid.add_component(n)
 

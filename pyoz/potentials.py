@@ -65,22 +65,11 @@ class TotalPotential(object):
 class Potential(object):
     """Base-class for all potentials.
 
-    TODO: See what else can be abstracted away from the sub-classes
-    """
-    def __repr__(self):
-        return self.__class__.__name__
-
-
-class ContinuousPotential(Potential):
-    """A continuous pair potential.
-
     * We always assume that `r` is the first parameter in `potential_func`
     * When no mixing rule or cross interaction is specified for a pair, they
         do not interact.
-
     """
     def __init__(self, system, potential_func, **mixing_rules):
-        super().__init__()
         self.system = system
         self.potential_func = potential_func
         # Assume that `r` is the first parameter in `potential_func`.
@@ -118,6 +107,12 @@ class ContinuousPotential(Potential):
     @property
     def n_components(self):
         return len(self.parameters.index)
+
+    def _component_idx(self, component):
+        return self.parameters.index.get_loc(component)
+
+    def _parameter_idx(self, parameter):
+        return self.parameters.columns.get_loc(parameter)
 
     def add_component(self, component, **parameters):
         wrong_num = len(parameters) != self.n_parameters
@@ -162,12 +157,6 @@ class ContinuousPotential(Potential):
             parm_j = self.parameters[parm][j]
             self.parm_ij[parm_idx, i, j] = mixer(parm_i, parm_j)
 
-    def _component_idx(self, component):
-        return self.parameters.index.get_loc(component)
-
-    def _parameter_idx(self, parameter):
-        return self.parameters.columns.get_loc(parameter)
-
     def add_binary_interaction(self, comp1, comp2, **parameters):
         # TODO: Do we ever need asymmetric interactions? U(c1, c2) != U(c2, c1)
         if any(c not in self.parameters.index for c in [comp1, comp2]):
@@ -180,6 +169,15 @@ class ContinuousPotential(Potential):
             parm_idx = self._parameter_idx(parm)
             self.parm_ij[parm_idx, comp1_idx, comp2_idx] = value
             self.parm_ij[parm_idx, comp2_idx, comp1_idx] = value
+
+    def __repr__(self):
+        return self.__class__.__name__
+
+
+class ContinuousPotential(Potential):
+    """A continuous pair potential. """
+    def __init__(self, system, potential_func, **mixing_rules):
+        super().__init__(system, potential_func, **mixing_rules)
 
     def apply(self):
         n_components = self.n_components
@@ -203,3 +201,13 @@ class Coulomb(ContinuousPotential):
         def coulomb(r, q):
             return system.bjerrum_length * q**2 / r
         super().__init__(system=system, potential_func=coulomb, q='geometric')
+
+
+class WCA(ContinuousPotential):
+    def __init__(self, system, **mixing_rules):
+        def wca_func(r, eps, sig, m, n):
+            p = 1 / (m - n)
+            r_cut = sig * (m / n)**p
+            U = 4 * eps * ((sig / r)**12 - (sig / r)**6) + eps
+            return np.where(r < r_cut, U, 0)
+        super().__init__(system=system, potential_func=wca_func, **mixing_rules)

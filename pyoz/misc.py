@@ -21,8 +21,7 @@ def rms_normed(A, B):
 
     distance = sqrt(sum[(A - B)^2] / (n_points * n_components^2))
     """
-    distance = ((A - B) ** 2).sum()
-    distance /= A.shape[2] * A.shape[0] ** 2
+    distance = ((A - B)**2).sum() / A.shape[2] * A.shape[0]**2
     return np.sqrt(distance)
 
 
