@@ -8,7 +8,7 @@ Until then, we recommend that you install the ``pyoz`` dependencies using
  [``conda``](https://www.continuum.io/downloads):
  
 ```bash
-conda install scipy pandas
+conda install scipy pandas numba
 pip install -e git+https://github.com/ctk3b/pyoz.git#egg=pyoz
 cd src/pyoz
 ```
@@ -16,7 +16,7 @@ cd src/pyoz
 but, in theory, you can also install them via pip:
 
 ```bash
-pip install scipy pandas
+pip install scipy pandas numba
 pip install -e git+https://github.com/ctk3b/pyoz.git#egg=pyoz
 cd src/pyoz
 ```

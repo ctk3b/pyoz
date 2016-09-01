@@ -20,7 +20,7 @@ potential = oz.ContinuousPotential(system=dpd_unary,
                                    a='arithmetic')
 
 # Create and add component `M` to the system.
-m = oz.Component(name='M', concentration=5)
+m = oz.Component(name='M', rho=5)
 m.add_potential(potential, a=50)
 dpd_unary.add_component(m)
 

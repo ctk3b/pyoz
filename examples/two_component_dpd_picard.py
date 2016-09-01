@@ -18,12 +18,12 @@ def dpd_func(r, a):
 potential = oz.ContinuousPotential(system=dpd_binary, potential_func=dpd_func)
 
 # Create and add component `M` to the system.
-m = oz.Component(name='M', concentration=2)
+m = oz.Component(name='M', rho=2)
 m.add_potential(potential, a=15)
 dpd_binary.add_component(m)
 
 # Create and add component `N` to the system.
-n = oz.Component(name='N', concentration=3)
+n = oz.Component(name='N', rho=3)
 n.add_potential(potential, a=15)
 dpd_binary.add_component(n)
 
