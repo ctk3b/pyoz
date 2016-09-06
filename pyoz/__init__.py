@@ -10,7 +10,8 @@ from pyoz.potentials import (ContinuousPotential,
 from pyoz.thermodynamic_properties import (kirkwood_buff_integrals,
                                            excess_chemical_potential,
                                            pressure_virial,
-                                           second_virial_coefficient)
+                                           second_virial_coefficient,
+                                           two_particle_excess_entropy)
 from pyoz import unit
 
 __all__ = ['System', 'Component', 'unit',
@@ -18,7 +19,8 @@ __all__ = ['System', 'Component', 'unit',
            'ContinuousPotential', 'LennardJones', 'Coulomb', 'WCA',
 
            'kirkwood_buff_integrals', 'excess_chemical_potential',
-           'pressure_virial', 'second_virial_coefficient']
+           'pressure_virial', 'second_virial_coefficient',
+           'two_particle_excess_entropy']
 
 __version__ = '0.4.0'
 __author__ = 'Lubos Vrbka'

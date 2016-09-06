@@ -14,7 +14,7 @@ from pyoz.unit import BOLTZMANN_CONSTANT_kB as kB
 
 
 class Component(object):
-    def __init__(self, name, rho=0.1):
+    def __init__(self, name, rho=0.001):
         self.name = name
         self._rho = None
         self.rho = rho
@@ -43,6 +43,13 @@ class Component(object):
         self.potentials.add(potential)
         potential.add_component(self, **parameters)
 
+    def remove_potential(self, potential):
+        potential.remove_component(self)
+
+    def replace_potential(self, old_potential, new_potential, **parameters):
+        old_potential.remove_component(self)
+        self.add_potential(new_potential, **parameters)
+
     def __repr__(self):
         descr = list('<{}, '.format(self.name))
         descr.append('rho: {:8.8f}, '.format(
@@ -66,7 +73,7 @@ class System(object):
 
         # Physical Constants
         # ==================
-        self.T = kwargs.get('T') or 300
+        self.T = kwargs.get('T') or 1
         self.eps_r = kwargs.get('eps_r') or 78.3 * u.dimensionless
         self.eps_0 = (kwargs.get('eps_0') or
                       8.854187817e-12 * u.farad / u.meter)
@@ -126,16 +133,34 @@ class System(object):
 
     def _apply_potentials(self):
         for potential in self.potentials:
-            potential.apply()
+            potential.apply(self.r)
         self.U_r = TotalPotential(r=self.r, n_components=len(self.components),
                                   potentials=self.potentials)
 
-    def solve(self, closure='hnc', initial_G_r=None, status_updates=True,
+    def solve(self, closure_name='hnc', initial_G_r=None, status_updates=True,
               iteration_scheme='picard', mix_param=0.8, tol=1e-9,
-              max_iter=1000):
+              max_iter=1000, **kwargs):
+        if self.n_components < 1:
+            raise PyozError('System contains no components. '
+                            'Use `.add_component()` before calling `solve`.')
+
+        if closure_name.upper() == 'RHNC':
+            if kwargs.get('g_r_ref') is None:
+                raise PyozError('Missing `g_r_ref` parameter for RHNC closure.')
+            if kwargs.get('G_r_ref') is None:
+                raise PyozError('Missing `G_r_ref` parameter for RHNC closure.')
+            if kwargs.get('U_r_ref') is None:
+                raise PyozError('Missing `U_r_ref` parameter for RHNC closure.')
+
+        try:
+            closure = supported_closures[closure_name.upper()]
+        except KeyError:
+            raise PyozError('Unsupported closure: ', closure_name)
+
         self.g_r = self.h_r = self.c_r = self.G_r = self.S_k = None
 
         self._apply_potentials()
+
         n_components = self.n_components
         n_points = self.n_points
 
@@ -163,16 +188,12 @@ class System(object):
         else:
             G_r = initial_G_r
 
-        # c(r) with density factor applied: C(r)
-        # c(k) with density factor applied: C(k)
         C_k = np.zeros(matrix_shape)
         Cs_k = np.zeros(matrix_shape)
 
         E = np.zeros(matrix_shape)
         for n in range(n_points):
             E[:, :, n] = np.eye(n_components)
-
-        closure = supported_closures[closure]
 
         converged = False
         total_iter = 0
@@ -190,7 +211,7 @@ class System(object):
             G_r_previous = np.copy(G_r)
 
             # Apply the closure relation.
-            c_r, g_r = closure(U_r, G_r)
+            c_r, g_r = closure(U_r, G_r, **kwargs)
 
 
             # Take us to fourier space.
@@ -205,7 +226,6 @@ class System(object):
             H_k = solver(A, B)
             S_k = 1 + H_k
             G_k = H_k - Cs_k
-
 
             # Snap back to reality.
             for i, j in np.ndindex(n_components, n_components):
@@ -236,9 +256,9 @@ class System(object):
         end = time.time()
         if converged:
             # Set before error so you can still extract info if unphysical.
-            c_r, g_r = closure(U_r, G_r)
+            c_r, g_r = closure(U_r, G_r, **kwargs)
             self.g_r = g_r
-            self.h_r = g_r - 1
+            self.h_r = h_r = g_r - 1
             self.c_r = c_r
             self.G_r = G_r
             self.S_k = S_k
@@ -249,7 +269,7 @@ class System(object):
             logger.info('Converged in {:.2f}s after {} iterations'.format(
                 end-start, n_iter)
             )
-            return
+            return g_r, h_r, c_r, G_r, S_k
 
         raise PyozError('Exceeded max # of iterations: {}'.format(n_iter))
 

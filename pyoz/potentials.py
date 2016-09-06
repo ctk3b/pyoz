@@ -68,9 +68,11 @@ class Potential(object):
     * We always assume that `r` is the first parameter in `potential_func`
     * When no mixing rule or cross interaction is specified for a pair, they
         do not interact.
+
+
+    TODO: Make Potential.parameters[component] work (currently KeyErrors)
     """
-    def __init__(self, system, potential_func, **mixing_rules):
-        self.system = system
+    def __init__(self, potential_func, **mixing_rules):
         self.potential_func = potential_func
         # Assume that `r` is the first parameter in `potential_func`.
         self.parameter_names = [p for p in
@@ -114,6 +116,26 @@ class Potential(object):
     def _parameter_idx(self, parameter):
         return self.parameters.columns.get_loc(parameter)
 
+    def remove_component(self, component):
+        comp_idx = self._component_idx(component)
+        self.parameters = self.parameters.drop(component)
+
+        old_ij = np.copy(self.parm_ij)
+        self.parm_ij = np.zeros(shape=(self.n_parameters,
+                                       self.n_components,
+                                       self.n_components))
+        for n, i, j in np.ndindex(old_ij.shape):
+            # Once we get to our component, skip it and get the next values.
+            i_old = i if i < comp_idx else i + 1
+            j_old = j if j < comp_idx else j + 1
+
+            # Ignore copying the last entries since we already covered them.
+            if i >= self.n_components or j >= self.n_components:
+                continue
+            self.parm_ij[n, i, j] = old_ij[n, i_old, j_old]
+
+        component.potentials.remove(self)
+
     def add_component(self, component, **parameters):
         wrong_num = len(parameters) != self.n_parameters
         wrong_parms = not all(p in self.parameters.columns
@@ -129,7 +151,7 @@ class Potential(object):
 
         # TODO: less disguting method to expand this array
         if self.n_components > 1:
-            self._expand_parm_ij()
+            self._resize_parm_ij()
 
         component_idx = self._component_idx(component)
         for parm, value in parameters.items():
@@ -140,7 +162,7 @@ class Potential(object):
 
         component.potentials.add(self)
 
-    def _expand_parm_ij(self):
+    def _resize_parm_ij(self):
         old_ij = np.copy(self.parm_ij)
         self.parm_ij = np.zeros(shape=(self.n_parameters,
                                        self.n_components,
@@ -176,12 +198,11 @@ class Potential(object):
 
 class ContinuousPotential(Potential):
     """A continuous pair potential. """
-    def __init__(self, system, potential_func, **mixing_rules):
-        super().__init__(system, potential_func, **mixing_rules)
+    def __init__(self, potential_func, **mixing_rules):
+        super().__init__(potential_func, **mixing_rules)
 
-    def apply(self):
+    def apply(self, r):
         n_components = self.n_components
-        r = self.system.r
 
         self.ij = np.zeros(shape=(n_components, n_components, r.shape[0]))
         for i, j in np.ndindex(self.parm_ij.shape[1:]):
@@ -190,24 +211,24 @@ class ContinuousPotential(Potential):
 
 
 class LennardJones(ContinuousPotential):
-    def __init__(self, system, **mixing_rules):
+    def __init__(self, **mixing_rules):
         def lj_func(r, eps, sig):
             return 4 * eps * ((sig / r)**12 - (sig / r)**6)
-        super().__init__(system=system, potential_func=lj_func, **mixing_rules)
+        super().__init__(potential_func=lj_func, **mixing_rules)
 
 
 class Coulomb(ContinuousPotential):
-    def __init__(self, system):
-        def coulomb(r, q):
-            return system.bjerrum_length * q**2 / r
-        super().__init__(system=system, potential_func=coulomb, q='geometric')
+    def __init__(self):
+        def coulomb(r, q1, q2, bjerrum_length=1):
+            return bjerrum_length * q1 * q2 / r
+        super().__init__(potential_func=coulomb)#, q='geometric')
 
 
 class WCA(ContinuousPotential):
-    def __init__(self, system, **mixing_rules):
+    def __init__(self, **mixing_rules):
         def wca_func(r, eps, sig, m, n):
             p = 1 / (m - n)
             r_cut = sig * (m / n)**p
             U = 4 * eps * ((sig / r)**12 - (sig / r)**6) + eps
             return np.where(r < r_cut, U, 0)
-        super().__init__(system=system, potential_func=wca_func, **mixing_rules)
+        super().__init__(potential_func=wca_func, **mixing_rules)

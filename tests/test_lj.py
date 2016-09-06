@@ -23,9 +23,7 @@ def test_two_comp_picard():
     oz.logger.info('eps={:8.2f}{:8.2f}'.format(*eps))
 
     lj_liquid = oz.System(T=T)
-    potential = oz.LennardJones(system=lj_liquid,
-                                sig='arithmetic',
-                                eps='geometric')
+    potential = oz.LennardJones(sig='arithmetic', eps='geometric')
 
     m = oz.Component(name='M', rho=C[0] / sig[0] ** 3)
     m.add_potential(potential, sig=sig[0], eps=eps[0] / T)
@@ -35,7 +33,7 @@ def test_two_comp_picard():
     n.add_potential(potential, sig=sig[1], eps=eps[1] / T)
     lj_liquid.add_component(n)
 
-    lj_liquid.solve(closure='hnc')
+    lj_liquid.solve(closure_name='hnc')
 
     n_components = lj_liquid.n_components
     assert np.allclose(lj_liquid.g_r[:, :, :10],

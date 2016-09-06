@@ -35,7 +35,7 @@ def pressure_virial(system):
     r = r[min_r:-1]
 
     integral = integrate(y=r**3 * g_r * dUdr, x=r)
-    return rho*system.T_red - 2/3 * np.pi * rho**2 * integral
+    return rho*system.T - 2/3 * np.pi * rho**2 * integral
 
 
 # TODO: double check kT
@@ -64,8 +64,20 @@ def excess_chemical_potential(system):
     return mu_ex
 
 
+def two_particle_excess_entropy(system):
+    """Compute 2-particle excess entropy.
+
+    Eqn. 9 in A Baranyi and DJ Evans, Phys. Rev. A., 1989
+    """
+    r, g_r, rho = system.r, system.g_r[0, 0], system.components[0].rho
+    integrand = np.where(g_r > 0,
+                         -0.5 * rho * (g_r * np.log(g_r) - g_r + 1.0),
+                         -0.5 * rho)
+    return rho * integrate(integrand, r)
+
+
 def second_virial_coefficient(system):
-    r, U_r, T = system.r, system.U_r.ij, system.T_red
+    r, U_r, T = system.r, system.U_r.ij[0, 0], system.T
     return -2 * np.pi * integrate(y=(np.exp(-U_r / T) - 1) * r**2, x=r)
 
 
@@ -73,7 +85,7 @@ def isothermal_compressibility(system):
     if system.r.shape[0] > 1:
         raise NotImplementedError('Compressibility calculation not yet '
                                   'implemented for multi-component systems.')
-    return system.S_k[0] / system.components[0].rho / system.T_red
+    return system.S_k[0] / system.components[0].rho / system.T
 
 
 def activity_coefficient(system):

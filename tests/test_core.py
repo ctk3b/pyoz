@@ -23,39 +23,99 @@ def test_init_component(name, concentration):
 def test_add_potential(n_potentials):
     assume(0 < n_potentials < 10)
     comp = oz.Component(name='foo')
-    syst = oz.System()
 
     for _ in range(n_potentials):
-        comp.add_potential(oz.LennardJones(system=syst), sig=1, eps=0.8)
+        comp.add_potential(oz.LennardJones(), sig=1, eps=0.8)
     assert comp.n_potentials == n_potentials
 
 
 def test_add_pot_vs_add_parm():
-    syst = oz.System()
-
-    def lj_func(r, e, s):
-        return 4 * e * ((s / r)**12 - (s / r)**6)
-    p1 = oz.ContinuousPotential(system=syst, potential_func=lj_func)
-    p2 = oz.ContinuousPotential(system=syst, potential_func=lj_func)
+    p1 = oz.LennardJones()
+    p2 = oz.LennardJones()
     c1 = oz.Component('1')
     c2 = oz.Component('2')
 
-    p1.add_component(c1, s=5, e=10)
-    c2.add_potential(p2, s=5, e=10)
+    p1.add_component(c1, sig=5, eps=10)
+    c2.add_potential(p2, sig=5, eps=10)
 
     assert all(p1.parameters.iloc[0] == p2.parameters.iloc[0])
     assert all(c1.parameters[p1].values == c2.parameters[p2].values)
 
 
 def test_add_component():
-    syst = oz.System()
-
-    def lj_func(r, e, s):
-        return 4 * e * ((s / r)**12 - (s / r)**6)
-    p1 = oz.ContinuousPotential(system=syst, potential_func=lj_func)
+    p1 = oz.LennardJones()
     c1 = oz.Component('1')
 
-    p1.add_component(c1, s=5, e=10)
+    p1.add_component(c1, sig=5, eps=10)
     with pytest.raises(PyozError):
-        p1.add_component(c1, s=5, e=10, z=15)
+        p1.add_component(c1, sig=5, eps=10, z=15)
         p1.add_component(c1)
+
+
+def test_remove_component():
+    p1 = oz.LennardJones()
+    c1 = oz.Component('1')
+    c2 = oz.Component('2')
+    p1.add_component(c1, sig=5, eps=10)
+    p1.add_component(c2, sig=50, eps=100)
+
+    p1.remove_component(c2)
+    assert p1.n_components == 1
+    assert p1.parameters.iloc[0]['sig'] == 5
+    assert p1.parameters.iloc[0]['eps'] == 10
+    assert p1.parm_ij[0, 0, 0] == 10
+    assert p1.parm_ij[1, 0, 0] == 5
+
+    p1 = oz.LennardJones()
+    c1 = oz.Component('1')
+    c2 = oz.Component('2')
+    p1.add_component(c1, sig=5, eps=10)
+    p1.add_component(c2, sig=50, eps=100)
+
+    p1.remove_component(c1)
+    assert p1.n_components == 1
+    assert p1.parameters.iloc[0]['sig'] == 50
+    assert p1.parameters.iloc[0]['eps'] == 100
+    assert p1.parm_ij[0, 0, 0] == 100
+    assert p1.parm_ij[1, 0, 0] == 50
+
+
+def test_remove_potential():
+    p1 = oz.LennardJones()
+    c1 = oz.Component('1')
+    p1.add_component(c1, sig=5, eps=10)
+
+    c1.remove_potential(p1)
+    assert p1.n_components == 0
+
+
+def test_replace_potential():
+    p1 = oz.LennardJones()
+    p2 = oz.LennardJones()
+    c1 = oz.Component('1')
+    p1.add_component(c1, sig=5, eps=10)
+
+    c1.replace_potential(p1, p2, sig=50, eps=100)
+    assert p1.n_components == 0
+    assert p2.n_components == 1
+    assert p2.parameters.iloc[0]['sig'] == 50
+    assert p2.parameters.iloc[0]['eps'] == 100
+    assert p2.parm_ij[0, 0, 0] == 100
+    assert p2.parm_ij[1, 0, 0] == 50
+
+
+def test_start_solve():
+    s1 = oz.System(T=1)
+    p1 = oz.LennardJones()
+    c1 = oz.Component('1')
+    p1.add_component(c1, sig=1, eps=1)
+
+    with pytest.raises(PyozError):
+        s1.solve(closure_name='hnc')
+
+    s1.add_component(c1)
+
+    with pytest.raises(PyozError):
+        s1.solve(closure_name='foobar')
+
+    s1.solve(closure_name='hnc')
