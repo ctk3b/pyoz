@@ -2,11 +2,8 @@
 
 import logging
 
-from pyoz.core import System, Component
-from pyoz.potentials import (ContinuousPotential,
-                             LennardJones,
-                             Coulomb,
-                             WCA)
+from pyoz.core import System
+from pyoz.potentials import *
 from pyoz.thermodynamic_properties import (kirkwood_buff_integrals,
                                            excess_chemical_potential,
                                            pressure_virial,
@@ -14,9 +11,9 @@ from pyoz.thermodynamic_properties import (kirkwood_buff_integrals,
                                            two_particle_excess_entropy)
 from pyoz import unit
 
-__all__ = ['System', 'Component', 'unit',
+__all__ = ['System', 'Potential',
 
-           'ContinuousPotential', 'LennardJones', 'Coulomb', 'WCA',
+           'mie', 'wca', 'lennard_jones', 'coulomb', 'screened_coulomb',
 
            'kirkwood_buff_integrals', 'excess_chemical_potential',
            'pressure_virial', 'second_virial_coefficient',

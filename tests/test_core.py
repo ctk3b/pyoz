@@ -1,121 +1,75 @@
-from hypothesis import given, assume
-from hypothesis.strategies import floats, integers, text
+from math import isclose
+
 import pytest
 
 import pyoz as oz
 from pyoz.exceptions import PyozError
 
 
-@given(name=text(), dr=floats(), n_points=integers())
-def test_init_system(name, dr, n_points):
-    assume(dr > 0)
-    assume(1 < n_points < 8192)
-    oz.System(name=name, dr=dr, n_points=n_points)
+def test_init_system():
+    name = 'A'
+    dr = 0.05
+    n_points = 4096
+    s = oz.System(name=name, dr=dr, n_points=n_points)
+    assert len(s.r) == n_points - 1
+    assert isclose(s.r[1] - s.r[0], dr, rel_tol=1e-3)
 
 
-@given(name=text(), concentration=floats())
-def test_init_component(name, concentration):
-    assume(concentration >= 0)
-    oz.Component(name=name, rho=concentration)
+def test_add_interaction():
+    s = oz.System()
+
+    s.add_interaction(0, 0, range(s.n_points))
+    assert s.U_r.shape == (1, 1, s.n_points)
+
+    s.add_interaction(1, 1, range(s.n_points))
+    assert s.U_r.shape == (2, 2, s.n_points)
+
+    s.add_interaction(0, 1, range(s.n_points))
+    assert s.U_r.shape == (2, 2, s.n_points)
+    assert (s.U_r[0, 1] == s.U_r[1, 0]).all()
+
+    s.add_interaction(0, 4, range(s.n_points))
+    assert s.U_r.shape == (5, 5, s.n_points)
+
+    s.add_interaction(0, 5, range(s.n_points), symmetric=False)
+    assert s.U_r.shape == (6, 6, s.n_points)
+    assert (s.U_r[0, 5] != s.U_r[5, 0]).any()
+    assert (s.U_r[5, 0] == 0).all()
 
 
-@given(n_potentials=integers())
-def test_add_potential(n_potentials):
-    assume(0 < n_potentials < 10)
-    comp = oz.Component(name='foo')
+@pytest.mark.skipif(True, reason='Not implemented yet')
+def test_remove_interaction():
+    s = oz.System()
 
-    for _ in range(n_potentials):
-        comp.add_potential(oz.LennardJones(), sig=1, eps=0.8)
-    assert comp.n_potentials == n_potentials
+    s.add_interaction(0, 0, range(s.n_points))
+    s.add_interaction(1, 1, range(10, 10 + s.n_points))
+    s.add_interaction(2, 2, range(20, 20 + s.n_points))
+    s.add_interaction(3, 3, range(30, 30 + s.n_points))
 
+    s.remove_interaction(0, 1)
+    assert s.U_r.shape == (4, 4, s.n_points)
 
-def test_add_pot_vs_add_parm():
-    p1 = oz.LennardJones()
-    p2 = oz.LennardJones()
-    c1 = oz.Component('1')
-    c2 = oz.Component('2')
+    s.remove_interaction(3, 3)
+    assert s.U_r.shape == (3, 3, s.n_points)
+    assert s.U_r[0, 0, -1] == s.n_points
+    assert s.U_r[1, 1, -1] == s.n_points + 10
+    assert s.U_r[2, 2, -1] == s.n_points + 10
 
-    p1.add_component(c1, sig=5, eps=10)
-    c2.add_potential(p2, sig=5, eps=10)
-
-    assert all(p1.parameters.iloc[0] == p2.parameters.iloc[0])
-    assert all(c1.parameters[p1].values == c2.parameters[p2].values)
-
-
-def test_add_component():
-    p1 = oz.LennardJones()
-    c1 = oz.Component('1')
-
-    p1.add_component(c1, sig=5, eps=10)
-    with pytest.raises(PyozError):
-        p1.add_component(c1, sig=5, eps=10, z=15)
-        p1.add_component(c1)
-
-
-def test_remove_component():
-    p1 = oz.LennardJones()
-    c1 = oz.Component('1')
-    c2 = oz.Component('2')
-    p1.add_component(c1, sig=5, eps=10)
-    p1.add_component(c2, sig=50, eps=100)
-
-    p1.remove_component(c2)
-    assert p1.n_components == 1
-    assert p1.parameters.iloc[0]['sig'] == 5
-    assert p1.parameters.iloc[0]['eps'] == 10
-    assert p1.parm_ij[0, 0, 0] == 10
-    assert p1.parm_ij[1, 0, 0] == 5
-
-    p1 = oz.LennardJones()
-    c1 = oz.Component('1')
-    c2 = oz.Component('2')
-    p1.add_component(c1, sig=5, eps=10)
-    p1.add_component(c2, sig=50, eps=100)
-
-    p1.remove_component(c1)
-    assert p1.n_components == 1
-    assert p1.parameters.iloc[0]['sig'] == 50
-    assert p1.parameters.iloc[0]['eps'] == 100
-    assert p1.parm_ij[0, 0, 0] == 100
-    assert p1.parm_ij[1, 0, 0] == 50
-
-
-def test_remove_potential():
-    p1 = oz.LennardJones()
-    c1 = oz.Component('1')
-    p1.add_component(c1, sig=5, eps=10)
-
-    c1.remove_potential(p1)
-    assert p1.n_components == 0
-
-
-def test_replace_potential():
-    p1 = oz.LennardJones()
-    p2 = oz.LennardJones()
-    c1 = oz.Component('1')
-    p1.add_component(c1, sig=5, eps=10)
-
-    c1.replace_potential(p1, p2, sig=50, eps=100)
-    assert p1.n_components == 0
-    assert p2.n_components == 1
-    assert p2.parameters.iloc[0]['sig'] == 50
-    assert p2.parameters.iloc[0]['eps'] == 100
-    assert p2.parm_ij[0, 0, 0] == 100
-    assert p2.parm_ij[1, 0, 0] == 50
+    s.remove_interaction(0, 0)
+    assert s.U_r.shape == (2, 2, s.n_points)
+    assert s.U_r[0, 0, -1] == s.n_points + 10
+    assert s.U_r[1, 1, -1] == s.n_points + 20
 
 
 def test_start_solve():
     s1 = oz.System(T=1)
-    p1 = oz.LennardJones()
-    c1 = oz.Component('1')
-    p1.add_component(c1, sig=1, eps=1)
+
+    with pytest.raises(TypeError):
+        s1.solve()
+
+    s1.add_interaction(0, 0, oz.wca(s1.r, eps=1, sig=1, m=12, n=6))
 
     with pytest.raises(PyozError):
-        s1.solve(closure_name='hnc')
+        s1.solve(rhos=[0.1], closure_name='foobar')
 
-    s1.add_component(c1)
-
-    with pytest.raises(PyozError):
-        s1.solve(closure_name='foobar')
-
-    s1.solve(closure_name='hnc')
+    s1.solve(rhos=[0.1])

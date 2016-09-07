@@ -27,7 +27,7 @@ def pressure_virial(system):
         raise NotImplementedError('Pressure calculation not yet implemented '
                                   'for multi-component systems.')
     min_r = 50
-    U_r = np.squeeze(U_r.ij)
+    U_r = np.squeeze(U_r)
     g_r = np.squeeze(g_r)[min_r:-1]
     rho = np.squeeze(rho)
     dr = r[1] - r[0]
@@ -77,7 +77,7 @@ def two_particle_excess_entropy(system):
 
 
 def second_virial_coefficient(system):
-    r, U_r, T = system.r, system.U_r.ij[0, 0], system.T
+    r, U_r, T = system.r, system.U_r[0, 0], system.T
     return -2 * np.pi * integrate(y=(np.exp(-U_r / T) - 1) * r**2, x=r)
 
 
@@ -101,8 +101,8 @@ def activity_coefficient(system):
 
 def excess_internal_energy(system):
     """ """
-    r, g_r, U_ij = system.r, system.g_r, system.U.ij
-    U_ex = 2 * np.pi * rho * integrate(y=g_r * U_ij * r**2,
+    r, g_r, U_r = system.r, system.g_r, system.U_r
+    U_ex = 2 * np.pi * rho * integrate(y=g_r * U_r * r**2,
                                        x=r,
                                        even='last')
     return U_ex

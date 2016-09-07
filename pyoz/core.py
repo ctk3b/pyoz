@@ -8,63 +8,8 @@ from pyoz.closure import supported_closures
 from pyoz.exceptions import PyozError
 from pyoz import dft as ft
 from pyoz.misc import rms_normed, solver, picard_iteration
-from pyoz.potentials import TotalPotential
 import pyoz.unit as u
 from pyoz.unit import BOLTZMANN_CONSTANT_kB as kB
-
-
-class Component(object):
-    def __init__(self, name, rho=0.001):
-        self.name = name
-        self._rho = None
-        self.rho = rho
-        self.potentials = set()
-
-    @property
-    def rho(self):
-        return self._rho
-
-    @rho.setter
-    def rho(self, c):
-        # TODO: units
-        if c < 0:
-            raise PyozError('Concentrations must be >= 0')
-        self._rho = c
-
-    @property
-    def n_potentials(self):
-        return len(self.potentials)
-
-    @property
-    def parameters(self):
-        return {pot: pot.parameters.loc[self] for pot in self.potentials}
-
-    def add_potential(self, potential, **parameters):
-        self.potentials.add(potential)
-        potential.add_component(self, **parameters)
-
-    def remove_potential(self, potential):
-        potential.remove_component(self)
-
-    def replace_potential(self, old_potential, new_potential, **parameters):
-        old_potential.remove_component(self)
-        self.add_potential(new_potential, **parameters)
-
-    def __repr__(self):
-        descr = list('<{}, '.format(self.name))
-        descr.append('rho: {:8.8f}, '.format(
-            self.rho))
-        descr.append('potentials:')
-        if self.potentials:
-            n_potentials = len(self.potentials)
-            for n, pot in enumerate(self.potentials):
-                descr.append(' {}'.format(pot))
-                if n < n_potentials - 1:
-                    descr.append(' +')
-        else:
-            descr.append('None')
-        descr.append('>')
-        return ''.join(descr)
 
 
 class System(object):
@@ -97,8 +42,6 @@ class System(object):
         max_r = self.dr * self.n_points
         self.dk = np.pi / max_r
 
-
-
         # System info
         # ===========
         self.closure = kwargs.get('closure') or 'hnc'
@@ -108,8 +51,8 @@ class System(object):
         dk = self.dk
         self.r = np.linspace(dr, self.n_points * dr - dr, self.n_points)
         self.k = np.linspace(dk, self.n_points * dk - dk, self.n_points)
-
-        self.components = list()
+        self.U_r = np.zeros(shape=(0, 0, self.n_points))
+        self.rho = None
 
         # Results get stored after `System.solve` successfully completes.
         self.g_r = None
@@ -120,29 +63,41 @@ class System(object):
 
     @property
     def n_components(self):
-        return len(self.components)
+        return self.U_r.shape[0]
 
     @property
-    def potentials(self):
-        return {p for c in self.components for p in c.potentials}
+    def U_r_erf_real(self):
+        return np.zeros_like(self.U_r)
 
-    def add_component(self, component):
-        self.components.append(component)
-        for potential in component.potentials:
-            self.potentials.add(potential)
+    @property
+    def U_r_erf_fourier(self):
+        return np.zeros_like(self.U_r)
 
-    def _apply_potentials(self):
-        for potential in self.potentials:
-            potential.apply(self.r)
-        self.U_r = TotalPotential(r=self.r, n_components=len(self.components),
-                                  potentials=self.potentials)
+    def add_interaction(self, comp1_idx, comp2_idx, potential, symmetric=True):
+        if len(potential) != self.n_points:
+            raise PyozError('Attempted to add values at {} points to potential'
+                            'with {} points.'.format(potential.shape, self.n_points))
+        if comp1_idx >= self.n_components or comp2_idx >= self.n_components:
+            n_bigger = max(comp1_idx, comp2_idx) - self.U_r.shape[0] + 1
+            self.U_r.resize((self.U_r.shape[0] + n_bigger,
+                             self.U_r.shape[1] + n_bigger,
+                             self.n_points))
+        self.U_r[comp1_idx, comp2_idx] = potential
+        if symmetric and comp1_idx != comp2_idx:
+            self.U_r[comp2_idx, comp1_idx] = potential
 
-    def solve(self, closure_name='hnc', initial_G_r=None, status_updates=True,
-              iteration_scheme='picard', mix_param=0.8, tol=1e-9,
-              max_iter=1000, **kwargs):
-        if self.n_components < 1:
-            raise PyozError('System contains no components. '
-                            'Use `.add_component()` before calling `solve`.')
+    def remove_interaction(self, comp1_idx, comp2_idx):
+        raise NotImplementedError
+
+    def solve(self, rhos, closure_name='hnc', initial_G_r=None,
+              status_updates=True, iteration_scheme='picard', mix_param=0.8,
+              tol=1e-9, max_iter=1000, **kwargs):
+        if self.U_r.shape[0] == 0:
+            raise PyozError('No interactions to solve. Use `add_interaction`'
+                            'before calling `solve`.')
+        if self.U_r.shape[0] != len(rhos):
+            raise PyozError("Number of ρ's provided does not match dimensions"
+                            " of potential")
 
         if closure_name.upper() == 'RHNC':
             if kwargs.get('g_r_ref') is None:
@@ -159,16 +114,13 @@ class System(object):
 
         self.g_r = self.h_r = self.c_r = self.G_r = self.S_k = None
 
-        self._apply_potentials()
-
+        U_r, U_r_erf_real, U_r_erf_fourier = self.U_r, self.U_r_erf_real, self.U_r_erf_fourier
         n_components = self.n_components
         n_points = self.n_points
 
-        # TODO: simplify and units
-        concs = [comp.rho for comp in self.components]
         rho = np.zeros(shape=(n_components, n_components))
         for i, j in np.ndindex(rho.shape):
-            rho[i, j] = np.sqrt(concs[i] * concs[j])
+            rho[i, j] = np.sqrt(rhos[i] * rhos[j])
         self.rho = rho
 
         matrix_shape = (n_components, n_components, n_points)
@@ -177,14 +129,9 @@ class System(object):
         logger = oz.logger
         if status_updates:
             logger.info('Initialized: {}'.format(self))
-            logger.info('Components:')
-            for comp in self.components:
-                logger.info('   {}'.format(comp))
-            logger.info('')
 
-        U_r = self.U_r
         if initial_G_r is None:
-            G_r = -U_r.erf_real
+            G_r = -U_r_erf_real
         else:
             G_r = initial_G_r
 
@@ -211,14 +158,14 @@ class System(object):
             G_r_previous = np.copy(G_r)
 
             # Apply the closure relation.
-            c_r, g_r = closure(U_r, G_r, **kwargs)
+            c_r, g_r = closure(U_r, G_r, U_r_erf_real, **kwargs)
 
 
             # Take us to fourier space.
             for i, j in np.ndindex(n_components, n_components):
                 Cs_k[i, j], C_k[i, j] = dft.dfbt(c_r[i, j],
                                                  norm=self.rho[i, j],
-                                                 corr=-U_r.erf_fourier[i, j])
+                                                 corr=-U_r_erf_fourier[i, j])
 
             # Solve dat equation.
             A = E - dft.ft_convolution_factor * C_k
@@ -231,7 +178,7 @@ class System(object):
             for i, j in np.ndindex(n_components, n_components):
                 G_r[i, j] = dft.idfbt(G_k[i, j],
                                       norm=self.rho[i, j],
-                                      corr=-U_r.erf_real[i, j])
+                                      corr=-U_r_erf_real[i, j])
 
             # Test for convergence.
             rms_norm = rms_normed(G_r, G_r_previous)
@@ -256,7 +203,7 @@ class System(object):
         end = time.time()
         if converged:
             # Set before error so you can still extract info if unphysical.
-            c_r, g_r = closure(U_r, G_r, **kwargs)
+            c_r, g_r = closure(U_r, G_r, U_r_erf_real, **kwargs)
             self.g_r = g_r
             self.h_r = h_r = g_r - 1
             self.c_r = c_r
@@ -274,15 +221,13 @@ class System(object):
         raise PyozError('Exceeded max # of iterations: {}'.format(n_iter))
 
     def __repr__(self):
-        descr = list('<{}, '.format(self.name))
-        descr.append('components: ')
-        for comp in self.components:
-            descr.append('{}, '.format(comp.name))
-        descr.append('potentials:')
-        n_potentials = len(self.potentials)
-        for n, pot in enumerate(self.potentials):
-            descr.append(' {}'.format(pot))
-            if n < n_potentials - 1:
-                descr.append(' +')
-        descr.append('>')
+        descr = list('< {}'.format(self.name))
+        if self.rho is not None:
+            descr.append('; {} component'.format(self.rho.shape[0]))
+            if self.rho.shape[0] > 1:
+                descr.append('s')
+            descr.append('; ρ: ')
+            for rho in self.rho.diagonal():
+                descr.append('{:.3f} '.format(rho))
+        descr.append(' >')
         return ''.join(descr)
