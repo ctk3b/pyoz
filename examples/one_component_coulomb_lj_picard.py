@@ -17,7 +17,7 @@ lj = oz.LennardJones(system=unary, sig='arithmetic', eps='geometric')
 m = oz.Component(name='M', rho=rho)
 m.add_potential(lj, sig=sigma, eps=epsilon)
 unary.add_component(m)
-unary.solve(closure='hnc', mix_param=0.8)
+unary.solve(closure_name='hnc', mix_param=0.8)
 
 
 # Plot just the LJ potential.

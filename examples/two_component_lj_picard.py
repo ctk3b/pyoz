@@ -29,7 +29,7 @@ n = oz.Component(name='N', rho=rho2)
 n.add_potential(potential, sig=sig2, eps=eps2)
 lj_binary.add_component(n)
 
-lj_binary.solve(closure='hnc', status_updates=True)
+lj_binary.solve(closure_name='hnc', status_updates=True)
 
 # Extract some results.
 fig1, ax1 = plt.subplots()

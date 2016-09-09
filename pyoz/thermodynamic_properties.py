@@ -55,7 +55,7 @@ def excess_chemical_potential(system):
     for i in range(n_components):
         mu = 0.0
         for j in range(n_components):
-            rho_j = system.components[j].rho
+            rho_j = system.rho[j]
             integrand = 0.5 * h_r[i, j] * G_r[i, j] - cs_r[i, j]
             mu += 4.0 * np.pi * rho_j * integrate(y=integrand * r**2,
                                                   x=r,
@@ -69,7 +69,7 @@ def two_particle_excess_entropy(system):
 
     Eqn. 9 in A Baranyi and DJ Evans, Phys. Rev. A., 1989
     """
-    r, g_r, rho = system.r, system.g_r[0, 0], system.components[0].rho
+    r, g_r, rho = system.r, system.g_r[0, 0], system.rho[0]
     integrand = np.where(g_r > 0,
                          -0.5 * rho * (g_r * np.log(g_r) - g_r + 1.0),
                          -0.5 * rho)
@@ -85,7 +85,7 @@ def isothermal_compressibility(system):
     if system.r.shape[0] > 1:
         raise NotImplementedError('Compressibility calculation not yet '
                                   'implemented for multi-component systems.')
-    return system.S_k[0] / system.components[0].rho / system.T
+    return system.S_k[0] / system.rho[0] / system.T
 
 
 def activity_coefficient(system):

@@ -15,8 +15,8 @@ eps2 = 119.8 / T
 
 # for rho in np.arange(0.55, 0.8, 0.001):
 for rho in [0.6]:
-    rho1 = rho / sig1**3
-    rho2 = rho / sig2**3
+    rho1 = rho / sig1**3 / 2
+    rho2 = rho / sig2**3 / 2
     # Initialize a blank system and a Lennard-Jones potential with mixing rules.
     lj_coul_binary = oz.System(T=T)
     lj = oz.LennardJones(system=lj_coul_binary, sig='arithmetic', eps='geometric')
@@ -34,10 +34,10 @@ for rho in [0.6]:
     # n.add_potential(coul, q=0.0)
     lj_coul_binary.add_component(n)
 
-    try:
-        lj_coul_binary.solve(closure='hnc', mix_param=0.8, status_updates=False)
-    except PyozError as e:
-        oz.logger.info(e)
+    # try:
+    lj_coul_binary.solve(closure_name='hnc', mix_param=0.8, status_updates=False)
+    # except PyozError as e:
+    #     oz.logger.info(e)
 
 
 fig1, ax1 = plt.subplots()

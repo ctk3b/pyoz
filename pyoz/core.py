@@ -95,6 +95,8 @@ class System(object):
         if self.U_r.shape[0] == 0:
             raise PyozError('No interactions to solve. Use `add_interaction`'
                             'before calling `solve`.')
+        if not hasattr(rhos, '__iter__'):
+            rhos = [rhos]
         if self.U_r.shape[0] != len(rhos):
             raise PyozError("Number of ρ's provided does not match dimensions"
                             " of potential")

@@ -24,7 +24,7 @@ m = oz.Component(name='M', rho=5)
 m.add_potential(potential, a=50)
 dpd_unary.add_component(m)
 
-dpd_unary.solve(closure='hnc')
+dpd_unary.solve(closure_name='hnc')
 
 
 # Extract some results.

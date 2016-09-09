@@ -30,7 +30,7 @@ dpd_binary.add_component(n)
 # Add the cross interaction between `M` and `N`.
 potential.add_binary_interaction(m, n, a=17.0)
 
-dpd_binary.solve(closure='hnc')
+dpd_binary.solve(closure_name='hnc')
 
 
 # Extract some results.
