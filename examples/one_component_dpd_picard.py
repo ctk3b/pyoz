@@ -15,26 +15,17 @@ def dpd_func(r, a):
     dpd[:cutoff] = 0.5 * a * (1 - r[:cutoff])**2
     return dpd
 
-potential = oz.ContinuousPotential(system=dpd_unary,
-                                   potential_func=dpd_func,
-                                   a='arithmetic')
-
-# Create and add component `M` to the system.
-m = oz.Component(name='M', rho=5)
-m.add_potential(potential, a=50)
-dpd_unary.add_component(m)
-
-dpd_unary.solve(closure_name='hnc')
-
+dpd_unary.set_interaction(0, 0, dpd_func(dpd_unary.r, 50))
+g_r, _, _, _ = dpd_unary.solve(rhos=5, closure_name='hnc')
 
 # Extract some results.
 fig1, ax1 = plt.subplots()
 fig2, ax2 = plt.subplots()
-max_r = 100
-r, g_r, U_r = dpd_unary.r, dpd_unary.g_r, dpd_unary.U_r
+max_r = 1000
+r, U_r = dpd_unary.r, dpd_unary.U_r
 
 ax1.plot(r[:max_r], g_r[0, 0, :max_r], lw=1.5)
-ax2.plot(r[:max_r], U_r.ij[0, 0, :max_r], lw=1.5)
+ax2.plot(r[:max_r], U_r[0, 0, :max_r], lw=1.5)
 
 ax1.set_xlabel('r (Å)')
 ax1.set_ylabel('g(r)')

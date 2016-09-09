@@ -18,20 +18,20 @@ def test_init_system():
 def test_add_interaction():
     s = oz.System()
 
-    s.add_interaction(0, 0, range(s.n_points))
+    s.set_interaction(0, 0, range(s.n_points))
     assert s.U_r.shape == (1, 1, s.n_points)
 
-    s.add_interaction(1, 1, range(s.n_points))
+    s.set_interaction(1, 1, range(s.n_points))
     assert s.U_r.shape == (2, 2, s.n_points)
 
-    s.add_interaction(0, 1, range(s.n_points))
+    s.set_interaction(0, 1, range(s.n_points))
     assert s.U_r.shape == (2, 2, s.n_points)
     assert (s.U_r[0, 1] == s.U_r[1, 0]).all()
 
-    s.add_interaction(0, 4, range(s.n_points))
+    s.set_interaction(0, 4, range(s.n_points))
     assert s.U_r.shape == (5, 5, s.n_points)
 
-    s.add_interaction(0, 5, range(s.n_points), symmetric=False)
+    s.set_interaction(0, 5, range(s.n_points), symmetric=False)
     assert s.U_r.shape == (6, 6, s.n_points)
     assert (s.U_r[0, 5] != s.U_r[5, 0]).any()
     assert (s.U_r[5, 0] == 0).all()
@@ -41,10 +41,10 @@ def test_add_interaction():
 def test_remove_interaction():
     s = oz.System()
 
-    s.add_interaction(0, 0, range(s.n_points))
-    s.add_interaction(1, 1, range(10, 10 + s.n_points))
-    s.add_interaction(2, 2, range(20, 20 + s.n_points))
-    s.add_interaction(3, 3, range(30, 30 + s.n_points))
+    s.set_interaction(0, 0, range(s.n_points))
+    s.set_interaction(1, 1, range(10, 10 + s.n_points))
+    s.set_interaction(2, 2, range(20, 20 + s.n_points))
+    s.set_interaction(3, 3, range(30, 30 + s.n_points))
 
     s.remove_interaction(0, 1)
     assert s.U_r.shape == (4, 4, s.n_points)
@@ -67,7 +67,7 @@ def test_start_solve():
     with pytest.raises(TypeError):
         s1.solve()
 
-    s1.add_interaction(0, 0, oz.wca(s1.r, eps=1, sig=1, m=12, n=6))
+    s1.set_interaction(0, 0, oz.wca(s1.r, eps=1, sig=1, m=12, n=6))
 
     with pytest.raises(PyozError):
         s1.solve(rhos=[0.1], closure_name='foobar')

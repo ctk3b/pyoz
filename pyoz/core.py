@@ -37,7 +37,7 @@ class System(object):
         self.n_points = kwargs.get('n_points') or 2**n_points_exp
         self.n_points -= 1
 
-        self.dr = kwargs.get('dr') or 0.05
+        self.dr = kwargs.get('dr') or 0.01
 
         max_r = self.dr * self.n_points
         self.dk = np.pi / max_r
@@ -55,11 +55,7 @@ class System(object):
         self.rho = None
 
         # Results get stored after `System.solve` successfully completes.
-        self.g_r = None
-        self.h_r = None
-        self.c_r = None
-        self.G_r = None
-        self.S_k = None
+        self.g_r = self.h_r = self.c_r = self.G_r = self.S_k = None
 
     @property
     def n_components(self):
@@ -73,7 +69,7 @@ class System(object):
     def U_r_erf_fourier(self):
         return np.zeros_like(self.U_r)
 
-    def add_interaction(self, comp1_idx, comp2_idx, potential, symmetric=True):
+    def set_interaction(self, comp1_idx, comp2_idx, potential, symmetric=True):
         if len(potential) != self.n_points:
             raise PyozError('Attempted to add values at {} points to potential'
                             'with {} points.'.format(potential.shape, self.n_points))
@@ -87,6 +83,7 @@ class System(object):
             self.U_r[comp2_idx, comp1_idx] = potential
 
     def remove_interaction(self, comp1_idx, comp2_idx):
+        # Needs to reduce size of U_r if comp1_idx == comp2_idx
         raise NotImplementedError
 
     def solve(self, rhos, closure_name='hnc', initial_G_r=None,
@@ -184,7 +181,6 @@ class System(object):
 
             # Test for convergence.
             rms_norm = rms_normed(G_r, G_r_previous)
-
             if rms_norm < tol:
                 converged = True
                 break
@@ -207,7 +203,7 @@ class System(object):
             # Set before error so you can still extract info if unphysical.
             c_r, g_r = closure(U_r, G_r, U_r_erf_real, **kwargs)
             self.g_r = g_r
-            self.h_r = h_r = g_r - 1
+            self.h_r = g_r - 1
             self.c_r = c_r
             self.G_r = G_r
             self.S_k = S_k
@@ -218,12 +214,12 @@ class System(object):
             logger.info('Converged in {:.2f}s after {} iterations'.format(
                 end-start, n_iter)
             )
-            return g_r, h_r, c_r, G_r, S_k
+            return g_r, c_r, G_r, S_k
 
         raise PyozError('Exceeded max # of iterations: {}'.format(n_iter))
 
     def __repr__(self):
-        descr = list('< {}'.format(self.name))
+        descr = list('<{}'.format(self.name))
         if self.rho is not None:
             descr.append('; {} component'.format(self.rho.shape[0]))
             if self.rho.shape[0] > 1:
@@ -231,5 +227,5 @@ class System(object):
             descr.append('; ρ: ')
             for rho in self.rho.diagonal():
                 descr.append('{:.3f} '.format(rho))
-        descr.append(' >')
+        descr.append('>')
         return ''.join(descr)
