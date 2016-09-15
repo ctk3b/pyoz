@@ -11,20 +11,15 @@ from pyoz.exceptions import PyozWarning, PyozError
 plt.style.use('fivethirtyeight')
 
 
-def scan(variables, interactions, system_vars=None, plot=True):
+def scan(rhos, interactions, system_vars=None, plot=True):
     # Messes up indexing later
-    assert isinstance(variables, OrderedDict)
+    # assert isinstance(variables, OrderedDict)
     assert len(interactions[0]) == 3
-
-    # System.solve() requires this. Technically could use default value but
-    # there really aren't any non-testing scenarios where you do not want to
-    # set this.
-    assert 'rho' in variables
 
     if system_vars is None:
         system_vars = dict()
     syst = oz.System(**system_vars)
-    thermo_data, raw_data = generate_data_storage(syst.r, variables)
+    # thermo_data, raw_data = generate_data_storage(syst.r, variables)
 
     # TODO: better check
 
@@ -34,48 +29,47 @@ def scan(variables, interactions, system_vars=None, plot=True):
         fig_sk, ax_sk = plt.subplots()
 
     G_r = None
-    vars = list(variables)
-    states = [dict(zip(vars, p)) for p in it.product(*variables.values())]
-    for state in states:
-        label = format_state_point(state)
-        oz.logger.info(label)
+    # vars = list(variables)
+    # states = [dict(zip(vars, p)) for p in it.product(*variables.values())]
+    label = format_state_point(state)
+    oz.logger.info(label)
 
-        syst = oz.System(**system_vars)
-        for idx1, idx2, potential_func in interactions:
-            U_r = potential_func(r=syst.r, **state)
-            syst.set_interaction(idx1, idx2, U_r)
+    syst = oz.System(**system_vars)
+    for idx1, idx2, potential_func in interactions:
+        U_r = potential_func(r=syst.r, **state)
+        syst.set_interaction(idx1, idx2, U_r)
 
 
-        rho = state['rho']
-        T = syst.T
-        try:
-            g_r, c_r, G_r, S_k = syst.solve(
-                rhos=rho, closure_name='hnc', mix_param=1.0,
-                status_updates=True, initial_G_r=G_r, max_iter=5000)
-        except PyozError as e:
-            oz.logger.info(e)
-            continue
+    rho = state['rho']
+    T = syst.T
+    try:
+        g_r, c_r, G_r, S_k = syst.solve(
+            rhos=rho, closure_name='hnc', mix_param=0.8,
+            status_updates=True, initial_G_r=G_r, max_iter=1000)
+    except PyozError as e:
+        oz.logger.info(e)
+        continue
 
-        # Plot reference state.
-        r, k, U_r = syst.r, syst.k, syst.U_r
-        if plot:
-            ax_gr.plot(r, g_r[0, 0], label=label)
-            ax_ur.plot(r, U_r[0, 0], label=label)
-            ax_sk.plot(k, S_k[0, 0], label=label)
+    # Plot reference state.
+    r, k, U_r = syst.r, syst.k, syst.U_r
+    if plot:
+        ax_gr.plot(r, g_r[0, 0], label=label)
+        ax_ur.plot(r, U_r[0, 0], label=label)
+        ax_sk.plot(k, S_k[0, 0], label=label)
 
-        raw = {'g_r': g_r, 'c_r': c_r, 'G_r': G_r, 'U_r': U_r, 'S_k': S_k}
-        for name, values in raw.items():
-            sel = (*state.values(), name)
-            raw_data.loc[sel] = values[0, 0]
+    raw = {'g_r': g_r, 'c_r': c_r, 'G_r': G_r, 'U_r': U_r, 'S_k': S_k}
+    for name, values in raw.items():
+        sel = (*state.values(), name)
+        raw_data.loc[sel] = values[0, 0]
 
-        B2 = oz.second_virial_coefficient(syst)
-        P_virial = oz.pressure_virial(syst)
-        mu_ex = T * oz.excess_chemical_potential(syst)[0]
-        mu = mu_ex + T * np.log(rho)
-        s2 = oz.two_particle_excess_entropy(syst)
+    B2 = oz.second_virial_coefficient(syst)
+    P_virial = oz.pressure_virial(syst)
+    mu_ex = T * oz.excess_chemical_potential(syst)[0]
+    mu = mu_ex + T * np.log(rho)
+    s2 = oz.two_particle_excess_entropy(syst)
 
-        sel = tuple(*state.values())
-        thermo_data.loc[sel] = [B2, P_virial, mu, S_k[0, 0, 0], s2]
+    sel = tuple(*state.values())
+    thermo_data.loc[sel] = [B2, P_virial, mu, S_k[0, 0, 0], s2]
 
     format_and_save_figures(fig_gr, ax_gr,
                             fig_ur, ax_ur,
@@ -144,6 +138,7 @@ def format_and_save_figures(fig_gr, ax_gr,
                             xlim=(0, 5),
                             **kwargs):
     ur_ylim = kwargs.get('ur_ylim')
+
 
     ax_gr.set_xlabel('r')
     ax_gr.set_ylabel('g(r)')

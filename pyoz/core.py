@@ -8,28 +8,12 @@ from pyoz.closure import supported_closures
 from pyoz.exceptions import PyozError
 from pyoz import dft as ft
 from pyoz.misc import rms_normed, solver, picard_iteration
-import pyoz.unit as u
-from pyoz.unit import BOLTZMANN_CONSTANT_kB as kB
 
 
 class System(object):
     def __init__(self, name='System', **kwargs):
         self.name = name
-
-        # Physical Constants
-        # ==================
         self.T = kwargs.get('T') or 1
-        self.eps_r = kwargs.get('eps_r') or 78.3 * u.dimensionless
-        self.eps_0 = (kwargs.get('eps_0') or
-                      8.854187817e-12 * u.farad / u.meter)
-        self.kT = self.T * u.kelvin * kB
-
-        # Coulomb interaction factor - Bjerrum length
-        # V(coul) in kT is then calculated as V = b_l * z1 * z2 / r
-        # with z in elementary charge units and r in A
-        coul_factor = 4 * np.pi * self.eps_0 * self.eps_r * self.kT
-        self.bjerrum_length = ((1 * u.elementary_charge)**2 /
-                               coul_factor).value_in_unit(u.angstroms)
 
         # Algorithm control
         # =================
@@ -177,7 +161,7 @@ class System(object):
             Gs_r_previous = np.copy(Gs_r)
 
             # Apply the closure relation.
-            cs_r = closure(U_r, Gs_r, U_r_erf_real, **kwargs)
+            cs_r = closure(U_r, Gs_r, U_r_erf_real, self.T, **kwargs)
 
             # Take us to fourier space.
             for i, j in np.ndindex(n_components, n_components):
@@ -200,10 +184,11 @@ class System(object):
 
             # Test for convergence.
             rms_norm = rms_normed(Gs_r, Gs_r_previous)
+            # rms_norm = np.linalg.norm(Gs_r_previous, Gs_r)
             if rms_norm < tol:
                 converged = True
                 break
-            elif np.isnan(rms_norm):
+            elif np.isnan(rms_norm) or np.isinf(rms_norm):
                 raise PyozError('Diverged at iteration # {}'.format(n_iter))
 
             # Iterate.
@@ -220,7 +205,7 @@ class System(object):
         end = time.time()
         if converged:
             # Set before error so you can still extract info if unphysical.
-            cs_r = closure(U_r, Gs_r, U_r_erf_real, **kwargs)
+            cs_r = closure(U_r, Gs_r, U_r_erf_real, self.T, **kwargs)
             # import ipdb; ipdb.set_trace()
             G_r = Gs_r + U_r_erf_real
             self.c_r = c_r = cs_r - U_r_erf_real
