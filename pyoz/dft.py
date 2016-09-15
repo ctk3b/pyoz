@@ -240,8 +240,7 @@ class dft:
         if norm == 0.0:  # infinite dilution
             f = zeros_like(F) + corr
         else:
-            f = (self.ift_prefactor * _idst(
-                F * self.k) * self.dk / self.r) / norm
+            f = (self.ift_prefactor * _idst(F * self.k) * self.dk / self.r) / norm
         return f
         # end def idft()
 
