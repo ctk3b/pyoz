@@ -49,14 +49,14 @@ def excess_chemical_potential(system):
 
     """
     # TODO: proper handling for short range c^s(r)
-    r, h_r, G_r, cs_r = system.r, system.h_r, system.G_r, system.c_r
+    r, h_r, e_r, cs_r = system.r, system.h_r, system.e_r, system.c_r
     n_components = system.n_components
     mu_ex = np.empty(shape=n_components)
     for i in range(n_components):
         mu = 0.0
         for j in range(n_components):
             rho_j = system.rho[j]
-            integrand = 0.5 * h_r[i, j] * G_r[i, j] - cs_r[i, j]
+            integrand = 0.5 * h_r[i, j] * e_r[i, j] - cs_r[i, j]
             mu += 4.0 * np.pi * rho_j * integrate(y=integrand * r**2,
                                                   x=r,
                                                   even='last')

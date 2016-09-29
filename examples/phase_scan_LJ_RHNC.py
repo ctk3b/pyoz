@@ -49,7 +49,7 @@ raw_data = xr.DataArray(data=data,
                                 'data': properties,
                                 'r': unary.r})
 
-G_r = None
+e_r = None
 for n, (T, rho) in enumerate(it.product(Ts, rhos)):
     oz.logger.info('T={:.3f}, rho={:.3f}'.format(T, rho))
     unary = oz.System(T=T)
@@ -57,9 +57,9 @@ for n, (T, rho) in enumerate(it.product(Ts, rhos)):
     # Solve for the reference state.
     unary.set_interaction(0, 0, oz.wca(unary.r, eps=eps / T, sig=sig, m=12, n=6))
     try:
-        g_r, c_r, G_r, S_k = unary.solve(
+        g_r, c_r, e_r, S_k = unary.solve(
             rhos=rho, closure_name='hnc', mix_param=0.8, status_updates=False,
-            initial_G_r=G_r)
+            initial_e_r=e_r)
     except PyozError as e:
         oz.logger.info(e)
         continue
@@ -75,10 +75,10 @@ for n, (T, rho) in enumerate(it.product(Ts, rhos)):
     unary = oz.System(T=T)
     unary.set_interaction(0, 0, oz.lennard_jones(unary.r, eps=eps / T, sig=sig))
     try:
-        g_r, c_r, G_r, S_k = unary.solve(
+        g_r, c_r, e_r, S_k = unary.solve(
             rhos=rho, closure_name='rhnc', mix_param=0.8, g_r_ref=g_r,
-            G_r_ref=G_r, U_r_ref=U_r, status_updates=False,
-            initial_G_r=G_r)
+            e_r_ref=e_r, U_r_ref=U_r, status_updates=False,
+            initial_e_r=e_r)
     except PyozError as e:
         oz.logger.info(e)
         continue

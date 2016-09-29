@@ -1,5 +1,6 @@
 from math import isclose
 
+import numpy as np
 import pytest
 
 import pyoz as oz
@@ -61,15 +62,37 @@ def test_remove_interaction():
     assert s.U_r[1, 1, -1] == s.n_points + 20
 
 
+def test_resolve():
+    s1 = oz.System(T=1)
+
+    s1.set_interaction(0, 0, oz.wca(s1.r, eps=1, sig=1, m=12, n=6))
+    results_1 = s1.solve(rhos=[0.1])
+
+    s1.set_interaction(0, 0, oz.wca(s1.r, eps=2, sig=2, m=18, n=12))
+    results_2 = s1.solve(rhos=[0.1])
+
+    for array_1, array_2 in zip(results_1, results_2):
+        assert not np.allclose(array_1, array_2)
+
+
 def test_start_solve():
     s1 = oz.System(T=1)
 
     with pytest.raises(TypeError):
         s1.solve()
 
+    with pytest.raises(PyozError):
+        s1.solve(rhos=[0.1])
+
     s1.set_interaction(0, 0, oz.wca(s1.r, eps=1, sig=1, m=12, n=6))
 
     with pytest.raises(PyozError):
         s1.solve(rhos=[0.1], closure_name='foobar')
 
+    with pytest.raises(PyozError):
+        s1.solve(rhos=[0.1, 0.2], closure_name='HNC')
+
     s1.solve(rhos=[0.1])
+
+
+

@@ -10,6 +10,22 @@ from pyoz import dft as ft
 from pyoz.misc import rms_normed, solver, picard_iteration
 
 
+def _get_closure_func(closure_name, **kwargs):
+    if closure_name.upper() == 'RHNC':
+        if kwargs.get('g_r_ref') is None:
+            raise PyozError('Missing `g_r_ref` parameter for RHNC closure.')
+        if kwargs.get('e_r_ref') is None:
+            raise PyozError('Missing `e_r_ref` parameter for RHNC closure.')
+        if kwargs.get('U_r_ref') is None:
+            raise PyozError('Missing `U_r_ref` parameter for RHNC closure.')
+    try:
+        closure = supported_closures[closure_name.upper()]
+    except KeyError:
+        raise PyozError('Unsupported closure: ', closure_name)
+
+    return closure
+
+
 class System(object):
     def __init__(self, name='System', **kwargs):
         self.name = name
@@ -28,8 +44,6 @@ class System(object):
 
         # System info
         # ===========
-        self.closure = kwargs.get('closure') or 'hnc'
-
         # TODO: units
         dr = self.dr
         dk = self.dk
@@ -41,7 +55,7 @@ class System(object):
         self.rho = None
 
         # Results get stored after `System.solve` successfully completes.
-        self.g_r = self.h_r = self.c_r = self.G_r = self.S_k = None
+        self.g_r = self.h_r = self.c_r = self.e_r = self.S_k = None
 
     @property
     def n_components(self):
@@ -71,7 +85,7 @@ class System(object):
         if ((long_range_real is None and long_range_fourier is not None) or
                 (long_range_real is not None and long_range_fourier is None)):
             raise PyozError('Provided long-range potential for either real'
-                            'or fourier space but not both')
+                            'or fourier space but not both.')
         if long_range_real is None:
             long_range_real = np.zeros_like(potential)
             long_range_fourier = np.zeros_like(potential)
@@ -88,43 +102,22 @@ class System(object):
         # Needs to reduce size of U_r if comp1_idx == comp2_idx
         raise NotImplementedError
 
-    def solve(self, rhos, closure_name='hnc', initial_G_r=None,
-              status_updates=True, iteration_scheme='picard', mix_param=0.8,
+    def solve(self, rhos, closure_name='hnc', initial_e_r=None,
+              status_updates=False, iteration_scheme='picard', mix_param=0.8,
               tol=1e-9, max_iter=1000, **kwargs):
-        if self.U_r.shape[0] == 0:
-            raise PyozError('No interactions to solve. Use `add_interaction`'
-                            'before calling `solve`.')
-        if not hasattr(rhos, '__iter__'):
-            rhos = [rhos]
-        if self.U_r.shape[0] != len(rhos):
-            raise PyozError("Number of ρ's provided does not match dimensions"
-                            " of potential")
+        self._validate_solve_inputs(rhos)
+        closure = _get_closure_func(closure_name, **kwargs)
 
-        if closure_name.upper() == 'RHNC':
-            if kwargs.get('g_r_ref') is None:
-                raise PyozError('Missing `g_r_ref` parameter for RHNC closure.')
-            if kwargs.get('G_r_ref') is None:
-                raise PyozError('Missing `G_r_ref` parameter for RHNC closure.')
-            if kwargs.get('U_r_ref') is None:
-                raise PyozError('Missing `U_r_ref` parameter for RHNC closure.')
-
-        try:
-            closure = supported_closures[closure_name.upper()]
-        except KeyError:
-            raise PyozError('Unsupported closure: ', closure_name)
-
-        self.g_r = self.h_r = self.c_r = self.G_r = self.S_k = None
-
+        # Bring some variables into the local namespace.
         U_r, U_r_erf_real, U_r_erf_fourier = self.U_r, self.U_r_erf_real, self.U_r_erf_fourier
         n_components = self.n_components
         n_points = self.n_points
 
-        rho = np.zeros(shape=(n_components, n_components))
-        for i, j in np.ndindex(rho.shape):
+        self.rho = np.zeros(shape=(n_components, n_components))
+        for i, j in np.ndindex(self.rho.shape):
             rho_ij = np.sqrt(rhos[i] * rhos[j])
             U_r_erf_fourier[i, j] = U_r_erf_fourier[i, j] * rho_ij
-            rho[i, j] = rho_ij
-        self.rho = rho
+            self.rho[i, j] = rho_ij
 
         matrix_shape = (n_components, n_components, n_points)
         dft = ft.dft(n_points, self.dr, self.dk, self.r, self.k)
@@ -133,10 +126,10 @@ class System(object):
         if status_updates:
             logger.info('Initialized: {}'.format(self))
 
-        if initial_G_r is None:
+        if initial_e_r is None:
             Gs_r = -U_r_erf_real
         else:
-            Gs_r = initial_G_r
+            Gs_r = initial_e_r
 
         C_k = np.zeros(matrix_shape)
         Cs_k = np.zeros(matrix_shape)
@@ -206,12 +199,11 @@ class System(object):
         if converged:
             # Set before error so you can still extract info if unphysical.
             cs_r = closure(U_r, Gs_r, U_r_erf_real, self.T, **kwargs)
-            # import ipdb; ipdb.set_trace()
-            G_r = Gs_r + U_r_erf_real
+            e_r = Gs_r + U_r_erf_real
             self.c_r = c_r = cs_r - U_r_erf_real
-            self.g_r = g_r = c_r + G_r + 1
+            self.g_r = g_r = c_r + e_r + 1
             self.h_r = g_r - 1
-            self.G_r = G_r
+            self.e_r = e_r
             self.S_k = S_k
 
             if (S_k < 0).any():
@@ -220,9 +212,21 @@ class System(object):
             logger.info('Converged in {:.2f}s after {} iterations'.format(
                 end-start, n_iter)
             )
-            return g_r, c_r, G_r, S_k
+            return g_r, c_r, e_r, S_k
 
         raise PyozError('Exceeded max # of iterations: {}'.format(n_iter))
+
+    def _validate_solve_inputs(self, rhos):
+        if self.U_r.shape[0] == 0:
+            raise PyozError('No interactions to solve. Use `add_interaction`'
+                            'before calling `solve`.')
+        if not hasattr(rhos, '__iter__'):
+            rhos = [rhos]
+        if self.U_r.shape[0] != len(rhos):
+            raise PyozError("Number of ρ's provided does not match dimensions"
+                            " of potential")
+
+
 
     def __repr__(self):
         descr = list('<{}'.format(self.name))

@@ -71,6 +71,6 @@ def solver(A, B):
     return H_k
 
 
-def picard_iteration(G_r, G_r_previous, mix):
-    return (1 - mix) * G_r_previous + mix * G_r
+def picard_iteration(e_r, e_r_previous, mix):
+    return (1 - mix) * e_r_previous + mix * e_r
 

@@ -125,7 +125,7 @@ def run(eps, NaCl_wt_perc, SiO2_wt_perc, m=100, n=50, T=298, prefix=''):
         # syst = oz.System(T=1 / eps, dr=dr, n_points=8192)
         # syst.set_interaction(0, 0, salr_ref)
         # try:
-        #     g_r, c_r, G_r, S_k = syst.solve(
+        #     g_r, c_r, e_r, S_k = syst.solve(
         #         rhos=rho, closure_name='hnc', mix_param=0.8,
         #         status_updates=False)
         # except PyozError as e:
@@ -138,17 +138,17 @@ def run(eps, NaCl_wt_perc, SiO2_wt_perc, m=100, n=50, T=298, prefix=''):
         # syst = oz.System(T=1 / eps, dr=dr, n_points=8192)
         # syst.set_interaction(0, 0, salr)
         # try:
-        #     g_r, c_r, G_r, S_k = syst.solve(
+        #     g_r, c_r, e_r, S_k = syst.solve(
         #         rhos=rho, closure_name='rhnc', mix_param=mix,
         #         status_updates=False, max_iter=5000,
-        #         initial_G_r=G_r, G_r_ref=G_r, U_r_ref=U_r_ref, g_r_ref=g_r_ref)
+        #         initial_e_r=e_r, e_r_ref=e_r, U_r_ref=U_r_ref, g_r_ref=g_r_ref)
         # except PyozError as e:
         #     print('Mix', mix, e)
         #     continue
         syst = oz.System(T=1, dr=dr, n_points=8192)
         syst.set_interaction(0, 0, salr)
         try:
-            g_r, c_r, G_r, S_k = syst.solve(
+            g_r, c_r, e_r, S_k = syst.solve(
                 rhos=rho, closure_name='hnc', mix_param=0.8,
                 status_updates=False)
         except PyozError as e:
@@ -163,8 +163,8 @@ def run(eps, NaCl_wt_perc, SiO2_wt_perc, m=100, n=50, T=298, prefix=''):
             s2 = oz.two_particle_excess_entropy(syst)[0]
             break
     else:
-        # g_r = c_r = G_r = S_k = B2 = P_virial = mu = s2 = g_r_ref = S_k_ref = np.nan
-        g_r = c_r = G_r = S_k = B2 = P_virial = mu = s2 = np.nan
+        # g_r = c_r = e_r = S_k = B2 = P_virial = mu = s2 = g_r_ref = S_k_ref = np.nan
+        g_r = c_r = e_r = S_k = B2 = P_virial = mu = s2 = np.nan
 
     if g_r is np.nan:
         g_r = np.empty_like(syst.r)
@@ -184,11 +184,11 @@ def run(eps, NaCl_wt_perc, SiO2_wt_perc, m=100, n=50, T=298, prefix=''):
     else:
         c_r = c_r[0, 0]
 
-    if G_r is np.nan:
-        G_r = np.empty_like(syst.r)
-        G_r[:] = np.nan
+    if e_r is np.nan:
+        e_r = np.empty_like(syst.r)
+        e_r[:] = np.nan
     else:
-        G_r = G_r[0, 0]
+        e_r = e_r[0, 0]
 
     if S_k is np.nan:
         S_k = np.empty_like(syst.r)
@@ -208,7 +208,7 @@ def run(eps, NaCl_wt_perc, SiO2_wt_perc, m=100, n=50, T=298, prefix=''):
             'g_r': g_r,
             # 'g_r_ref': g_r_ref,
             'c_r': c_r,
-            'G_r': G_r,
+            'e_r': e_r,
             'U_r': U_r,
             'S_k': S_k,
             # 'S_k_ref': S_k_ref,
