@@ -49,12 +49,16 @@ def kovalenko_hirata(U_r, e_r, kT,  **kwargs):
     pass
 
 
-def partial_series_expansion_n():
+def partial_series_expansion_n(U_r, e_r, kT,  **kwargs):
     pass
 
 
-def duh_henderson():
+def duh_henderson(U_r, e_r, kT,  **kwargs):
     """See: An effective-colloid pair potential for Lennard-Jones colloid–polymer
     mixtures Orlando Guzmán and Juan J. de Pablo """
+    pass
+
+
+def scoza(U_r, e_r, kT,  **kwargs):
     pass
 

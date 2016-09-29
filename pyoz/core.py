@@ -83,16 +83,11 @@ class System(object):
               tol=1e-9, status_updates=False,  max_iter=1000, **kwargs):
         rhos = self._validate_solve_inputs(rhos)
         closure = _get_closure_func(closure_name, **kwargs)
+        self._set_rhos(rhos)
 
-        # Bring some variables into the local namespace.
         U_r = self.U_r
         n_components = self.n_components
         n_points = self.n_points
-
-        self.rho = np.zeros(shape=(n_components, n_components))
-        for i, j in np.ndindex(self.rho.shape):
-            rho_ij = np.sqrt(rhos[i] * rhos[j])
-            self.rho[i, j] = rho_ij
 
         if initial_e_r is None:
             e_r = np.zeros_like(U_r)
@@ -105,9 +100,7 @@ class System(object):
         for n in range(n_points):
             E[:, :, n] = np.eye(n_components)
 
-        total_iter = 0
         n_iter = 0
-
         logger = oz.logger
         if status_updates:
             logger.info('Initialized: {}'.format(self))
@@ -118,7 +111,6 @@ class System(object):
         while n_iter < max_iter:
             loop_start = time.time()
             n_iter += 1
-            total_iter += 1
             e_r_previous = np.copy(e_r)
 
             # Apply the closure relation.
@@ -188,6 +180,12 @@ class System(object):
             raise PyozError("Number of ρ's provided does not match dimensions"
                             " of potential")
         return rhos
+
+    def _set_rhos(self, rhos):
+        self.rho = np.zeros(shape=(self.n_components, self.n_components))
+        for i, j in np.ndindex(self.rho.shape):
+            rho_ij = np.sqrt(rhos[i] * rhos[j])
+            self.rho[i, j] = rho_ij
 
     def __repr__(self):
         descr = list('<{}'.format(self.name))

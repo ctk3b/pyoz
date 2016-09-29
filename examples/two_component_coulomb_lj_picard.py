@@ -4,6 +4,7 @@ from numpy import exp
 from scipy.special import erf
 
 import pyoz as oz
+from pyoz.potentials import arithmetic, geometric
 from pyoz.exceptions import PyozError
 
 plt.style.use('seaborn-colorblind')
@@ -18,8 +19,8 @@ sig0 = 1
 eps0 = 1 / T
 sig1 = 1
 eps1 = 1 / T
-sig01 = oz.arithmetic(sig1, sig0)
-eps01 = oz.geometric(sig1, sig0)
+sig01 = arithmetic(sig1, sig0)
+eps01 = geometric(sig1, sig0)
 
 q0 = -0.5
 q1 = 0.5

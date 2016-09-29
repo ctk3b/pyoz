@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyoz as oz
+from pyoz.potentials import arithmetic, geometric
 from pyoz.exceptions import PyozError
 
 plt.style.use('seaborn-colorblind')
@@ -12,8 +13,8 @@ sig0 = 1
 eps0 = 1 / T
 sig1 = 2
 eps1 = 1 / T
-sig01 = oz.arithmetic(sig1, sig0)
-eps01 = oz.geometric(sig1, sig0)
+sig01 = arithmetic(sig1, sig0)
+eps01 = geometric(sig1, sig0)
 
 rho1 = 0.01 / sig0**3
 rho2 = 0.01 / sig1**3

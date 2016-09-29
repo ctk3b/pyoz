@@ -1,9 +1,7 @@
 import numpy as np
 
-from pyoz.exceptions import PyozError
 
-__all__ = ['arithmetic', 'geometric', 'mie', 'lennard_jones', 'wca', 'coulomb',
-           'screened_coulomb']
+__all__ = ['mie', 'lennard_jones', 'wca', 'coulomb', 'screened_coulomb']
 
 
 def arithmetic(a, b):

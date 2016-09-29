@@ -1,7 +1,12 @@
 import numpy as np
 from scipy.integrate import simps as integrate
 
-from pyoz.unit import BOLTZMANN_CONSTANT_kB as kB
+
+__all__ = ['kirkwood_buff_integrals',
+           'excess_chemical_potential',
+           'pressure_virial',
+           'second_virial_coefficient',
+           'two_particle_excess_entropy']
 
 
 def kirkwood_buff_integrals(system):
@@ -43,7 +48,7 @@ def excess_chemical_potential(system):
     """Compute the excess chemical potentials.
 
     \beta mu_i^{ex} = \sum_i 4 \pi \rho_i  *
-                            \int [ h(r) \Gamma(r) / 2 - c^s(r) ] r^2 dr
+                            \int [ h(r) * e(r) / 2 - c^s(r) ] r^2 dr
 
     Currently only the HNC approximation is supported.
 

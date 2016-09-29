@@ -27,17 +27,7 @@ def rms_normed(A, B):
 
 @jit(nopython=True)
 def solver(A, B):
-    """Solve the matrix problem in fourier space.
-
-    Note that the convolution theorem involves a constant factor
-    depending on the forward fourier transform normalization constant.
-
-    H = C + ff CH
-    H - ff CH = C
-    {E - ff C}H = C
-    H = {E - ff C}^-1 * C
-    h = H / dens_factor
-    """
+    """Solve the matrix problem in fourier space. """
     n_components = A.shape[0]
     n_points = A.shape[-1]
 

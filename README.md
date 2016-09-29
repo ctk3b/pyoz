@@ -18,15 +18,14 @@ Proper docs coming soon. In the meantime, check out the `examples` folder.
 - [ ] Newton-Raphson/conjugate gradient iteration scheme
 
 ### Closure relations
-- [x] Hypernetted Chain (HNC)
 - [x] Percus-Yevick (PY)
+- [x] Hypernetted Chain (HNC)
+- [x] Reference Hypernetted Chain (RHNC)
 
 ### Interatomic potentials
-- [ ] Hard spheres potential
-- [ ] Coulomb potential (used together with Ng-renormalization)
-- [ ] Charge-induced dipole interaction
-- [x] Lennard-Jones potential with σ and ε
-- [ ] Potential of mean force from external file
+- [x] Continuous short-range potentials (e.g. Lennard-Jones, screened Coulomb)
+- [ ] Discontinuous potentials
+- [ ] Long-range potentials using Ng-renormalization (e.g. Coulomb)
 
 ### Thermodynamic properties
 - [ ] Osmotic coefficient
@@ -39,4 +38,3 @@ Proper docs coming soon. In the meantime, check out the `examples` folder.
 - [x] Direct correlation functions c(r)
 - [x] Partial structure factors S(k)
 - [x] Pair potentials U(r)
-- [x] Total interaction potential - U(r) + indirect correlation function
