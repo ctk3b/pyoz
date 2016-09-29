@@ -220,8 +220,7 @@ class dft:
         # FT(f) can be calculated as DST(f*r)dr/k
         F = self.fft_prefactor * _dst(f * self.r) * self.dr / self.k
         F *= norm
-        Fc = F + corr  # correction already includes sqrt(rho_i rho_j)
-        return F, Fc
+        return F
 
     def idfbt(self, F, norm=1.0, corr=0.0):
         """

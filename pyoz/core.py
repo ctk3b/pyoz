@@ -50,8 +50,6 @@ class System(object):
         self.r = np.linspace(dr, self.n_points * dr - dr, self.n_points)
         self.k = np.linspace(dk, self.n_points * dk - dk, self.n_points)
         self.U_r = np.zeros(shape=(0, 0, self.n_points))
-        self.U_r_erf_fourier = np.zeros(shape=(0, 0, self.n_points))
-        self.U_r_erf_real = np.zeros(shape=(0, 0, self.n_points))
         self.rho = None
 
         # Results get stored after `System.solve` successfully completes.
@@ -61,9 +59,7 @@ class System(object):
     def n_components(self):
         return self.U_r.shape[0]
 
-    def set_interaction(self, comp1_idx, comp2_idx, potential,
-                        long_range_real=None, long_range_fourier=None,
-                        symmetric=True):
+    def set_interaction(self, comp1_idx, comp2_idx, potential, symmetric=True):
         if len(potential) != self.n_points:
             raise PyozError('Attempted to add values at {} points to potential'
                             'with {} points.'.format(potential.shape, self.n_points))
@@ -72,31 +68,12 @@ class System(object):
             self.U_r.resize((self.U_r.shape[0] + n_bigger,
                              self.U_r.shape[1] + n_bigger,
                              self.n_points))
-            self.U_r_erf_real.resize((self.U_r_erf_real.shape[0] + n_bigger,
-                                      self.U_r_erf_real.shape[1] + n_bigger,
-                                      self.n_points))
-            self.U_r_erf_fourier.resize((self.U_r_erf_fourier.shape[0] + n_bigger,
-                                         self.U_r_erf_fourier.shape[1] + n_bigger,
-                                         self.n_points))
         self.U_r[comp1_idx, comp2_idx] = potential
         if symmetric and comp1_idx != comp2_idx:
             self.U_r[comp2_idx, comp1_idx] = potential
 
-        if ((long_range_real is None and long_range_fourier is not None) or
-                (long_range_real is not None and long_range_fourier is None)):
-            raise PyozError('Provided long-range potential for either real'
-                            'or fourier space but not both.')
-        if long_range_real is None:
-            long_range_real = np.zeros_like(potential)
-            long_range_fourier = np.zeros_like(potential)
-
-        self.U_r_erf_real[comp1_idx, comp2_idx] = long_range_real
-        self.U_r_erf_fourier[comp1_idx, comp2_idx] = long_range_fourier
-
         if symmetric and comp1_idx != comp2_idx:
             self.U_r[comp2_idx, comp1_idx] = potential
-            self.U_r_erf_real[comp2_idx, comp1_idx] = long_range_real
-            self.U_r_erf_fourier[comp2_idx, comp1_idx] = long_range_fourier
 
     def remove_interaction(self, comp1_idx, comp2_idx):
         # Needs to reduce size of U_r if comp1_idx == comp2_idx
@@ -109,31 +86,24 @@ class System(object):
         closure = _get_closure_func(closure_name, **kwargs)
 
         # Bring some variables into the local namespace.
-        U_r, U_r_erf_real, U_r_erf_fourier = self.U_r, self.U_r_erf_real, self.U_r_erf_fourier
+        U_r = self.U_r
         n_components = self.n_components
         n_points = self.n_points
 
         self.rho = np.zeros(shape=(n_components, n_components))
         for i, j in np.ndindex(self.rho.shape):
             rho_ij = np.sqrt(rhos[i] * rhos[j])
-            U_r_erf_fourier[i, j] = U_r_erf_fourier[i, j] * rho_ij
             self.rho[i, j] = rho_ij
 
-        matrix_shape = (n_components, n_components, n_points)
         dft = ft.dft(n_points, self.dr, self.dk, self.r, self.k)
 
-        logger = oz.logger
-        if status_updates:
-            logger.info('Initialized: {}'.format(self))
-
         if initial_e_r is None:
-            Gs_r = -U_r_erf_real
+            e_r = np.zeros_like(U_r)
         else:
-            Gs_r = initial_e_r
+            e_r = initial_e_r
 
+        matrix_shape = (n_components, n_components, n_points)
         C_k = np.zeros(matrix_shape)
-        Cs_k = np.zeros(matrix_shape)
-
         E = np.zeros(matrix_shape)
         for n in range(n_points):
             E[:, :, n] = np.eye(n_components)
@@ -141,43 +111,40 @@ class System(object):
         converged = False
         total_iter = 0
         n_iter = 0
-        start = time.time()
 
+        logger = oz.logger
         if status_updates:
+            logger.info('Initialized: {}'.format(self))
             logger.info('Starting iteration...')
             logger.info('   {:8s}{:10s}{:10s}'.format(
                 'step', 'time (s)', 'error'))
+        start = time.time()
         while not converged and n_iter < max_iter:
             loop_start = time.time()
             n_iter += 1
             total_iter += 1
-            Gs_r_previous = np.copy(Gs_r)
+            e_r_previous = np.copy(e_r)
 
             # Apply the closure relation.
-            cs_r = closure(U_r, Gs_r, U_r_erf_real, self.T, **kwargs)
+            c_r = closure(U_r, e_r, self.T, **kwargs)
 
             # Take us to fourier space.
             for i, j in np.ndindex(n_components, n_components):
-                Cs_k[i, j], C_k[i, j] = dft.dfbt(cs_r[i, j],
-                                                 norm=self.rho[i, j],
-                                                 corr=-U_r_erf_fourier[i, j])
+                C_k[i, j] = dft.dfbt(c_r[i, j], norm=self.rho[i, j])
 
             # Solve dat equation.
             A = E - dft.ft_convolution_factor * C_k
             B = C_k
             H_k = solver(A, B)
             S_k = 1 + H_k
-            Gs_k = H_k - Cs_k
+            E_k = H_k - C_k
 
             # Snap back to reality.
             for i, j in np.ndindex(n_components, n_components):
-                Gs_r[i, j] = dft.idfbt(Gs_k[i, j],
-                                      norm=self.rho[i, j],
-                                      corr=U_r_erf_real[i, j])
+                e_r[i, j] = dft.idfbt(E_k[i, j], norm=self.rho[i, j])
 
             # Test for convergence.
-            rms_norm = rms_normed(Gs_r, Gs_r_previous)
-            # rms_norm = np.linalg.norm(Gs_r_previous, Gs_r)
+            rms_norm = rms_normed(e_r, e_r_previous)
             if rms_norm < tol:
                 converged = True
                 break
@@ -186,7 +153,7 @@ class System(object):
 
             # Iterate.
             if iteration_scheme == 'picard':
-                Gs_r = picard_iteration(Gs_r, Gs_r_previous, mix_param)
+                e_r = picard_iteration(e_r, e_r_previous, mix_param)
             else:
                 raise PyozError('Iteration scheme "{}" not yet '
                                 'implemented.'.format(iteration_scheme))
@@ -198,9 +165,8 @@ class System(object):
         end = time.time()
         if converged:
             # Set before error so you can still extract info if unphysical.
-            cs_r = closure(U_r, Gs_r, U_r_erf_real, self.T, **kwargs)
-            e_r = Gs_r + U_r_erf_real
-            self.c_r = c_r = cs_r - U_r_erf_real
+            c_r = closure(U_r, e_r, self.T, **kwargs)
+            self.c_r = c_r
             self.g_r = g_r = c_r + e_r + 1
             self.h_r = g_r - 1
             self.e_r = e_r
@@ -225,8 +191,6 @@ class System(object):
         if self.U_r.shape[0] != len(rhos):
             raise PyozError("Number of ρ's provided does not match dimensions"
                             " of potential")
-
-
 
     def __repr__(self):
         descr = list('<{}'.format(self.name))
