@@ -10,22 +10,6 @@ from pyoz.exceptions import PyozError
 from pyoz.misc import rms_normed, solver, picard_iteration
 
 
-def _get_closure_func(closure_name, **kwargs):
-    if closure_name.upper() == 'RHNC':
-        if kwargs.get('g_r_ref') is None:
-            raise PyozError('Missing `g_r_ref` parameter for RHNC closure.')
-        if kwargs.get('e_r_ref') is None:
-            raise PyozError('Missing `e_r_ref` parameter for RHNC closure.')
-        if kwargs.get('U_r_ref') is None:
-            raise PyozError('Missing `U_r_ref` parameter for RHNC closure.')
-    try:
-        closure = supported_closures[closure_name.upper()]
-    except KeyError:
-        raise PyozError('Unsupported closure: ', closure_name)
-
-    return closure
-
-
 class System(object):
     def __init__(self, name='System', **kwargs):
         self.name = name
@@ -80,8 +64,22 @@ class System(object):
     def solve(self, rhos, closure_name='hnc', initial_e_r=None, mix_param=0.8,
               tol=1e-9, status_updates=False,  max_iter=1000, **kwargs):
         rhos = self._validate_solve_inputs(rhos)
-        closure = _get_closure_func(closure_name, **kwargs)
         self._set_rhos(rhos)
+
+        # Lookup the closure
+        try:
+            closure = supported_closures[closure_name.upper()]
+        except KeyError:
+            raise PyozError('Unsupported closure: ', closure_name)
+
+        # Perform reference system calculation if necessary.
+        if closure_name.upper() == 'RHNC':
+            if kwargs.get('reference_system') is None:
+                raise PyozError('Missing `reference_system` parameter for RHNC closure.')
+
+            ref_system = kwargs['reference_system']
+            _, _, initial_e_r, _ = ref_system.solve(rhos=rhos, closure_name='HNC', **kwargs)
+
         self.closure_used = closure
 
         U_r = self.U_r

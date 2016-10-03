@@ -19,9 +19,10 @@ def reference_hypernetted_chain(U_r, e_r, kT, **kwargs):
     c_r = exp(-U) * exp(e_r) - e_r - 1
 
     """
-    g_r_ref = kwargs['g_r_ref']
-    e_r_ref = kwargs['e_r_ref']
-    U_r_ref = kwargs['U_r_ref']
+    ref_system = kwargs['reference_system']
+    g_r_ref = ref_system.g_r
+    e_r_ref = ref_system.e_r
+    U_r_ref = ref_system.U_r
 
     dU = U_r - U_r_ref
     dG = e_r - e_r_ref

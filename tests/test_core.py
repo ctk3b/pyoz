@@ -102,3 +102,14 @@ def test_two_component_lj(two_component_lj):
     assert np.allclose(two_component_lj.g_r[:, :, -10:],
                        np.ones(shape=(n_components, n_components, 10)))
 
+
+def test_solve_with_reference():
+    eps = 1
+    sig = 1
+    wca_ref = oz.System()
+    wca_ref.set_interaction(0, 0, oz.wca(wca_ref.r, eps=eps, sig=sig, m=12, n=6))
+
+    lj = oz.System()
+    lj.set_interaction(0, 0, oz.lennard_jones(lj.r, eps=eps, sig=sig))
+
+    lj.solve(rhos=0.01, closure_name='RHNC', reference_system=wca_ref)
