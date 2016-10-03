@@ -35,11 +35,6 @@ def test_add_interaction():
     s.set_interaction(0, 4, range(s.n_points))
     assert s.U_r.shape == (5, 5, s.n_points)
 
-    s.set_interaction(0, 5, range(s.n_points), symmetric=False)
-    assert s.U_r.shape == (6, 6, s.n_points)
-    assert (s.U_r[0, 5] != s.U_r[5, 0]).any()
-    assert (s.U_r[5, 0] == 0).all()
-
 
 @pytest.mark.skipif(True, reason='Not implemented yet')
 def test_remove_interaction():
