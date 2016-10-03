@@ -44,7 +44,19 @@ class System(object):
     def n_components(self):
         return self.U_r.shape[0]
 
-    def set_interaction(self, comp1_idx, comp2_idx, potential, symmetric=True):
+    def set_interaction(self, comp1_idx, comp2_idx, potential):
+        """Set an interaction potential between two components.
+
+        Parameters
+        ----------
+        comp1_idx : int
+            The index of a component interacting with this potential.
+        comp2_idx : int
+            The index of the other component interacting with this potential.
+        potential : np.ndarray, shape=(n_points,), dtype=float
+            Values of the potential at all points in self.r
+
+        """
         potential = np.array(potential)
         if len(potential) != self.n_points:
             raise PyozError('Attempted to add values at {} points to potential '
@@ -55,8 +67,7 @@ class System(object):
                              self.U_r.shape[1] + n_bigger,
                              self.n_points))
         self.U_r[comp1_idx, comp2_idx] = potential
-        if symmetric and comp1_idx != comp2_idx:
-            self.U_r[comp2_idx, comp1_idx] = potential
+        self.U_r[comp2_idx, comp1_idx] = potential
 
     def remove_interaction(self, comp1_idx, comp2_idx):
         # Needs to reduce size of U_r if comp1_idx == comp2_idx
@@ -64,6 +75,26 @@ class System(object):
 
     def solve(self, rhos, closure_name='hnc', initial_e_r=None, mix_param=0.8,
               tol=1e-9, status_updates=False,  max_iter=1000, **kwargs):
+        """Solve the Ornstein-Zernike equation for this system.
+
+        Parameters
+        ----------
+        rhos : float or list-like
+        closure_name : str
+        initial_e_r : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
+        mix_param : float
+        tol : float
+        status_updates : bool
+        max_iter : int
+
+        Returns
+        -------
+        g_r : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
+        c_r : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
+        e_r : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
+        S_k : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
+
+        """
         rhos = self._validate_solve_inputs(rhos)
         self._set_rhos(rhos)
 
