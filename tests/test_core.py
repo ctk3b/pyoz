@@ -112,4 +112,6 @@ def test_solve_with_reference():
     lj = oz.System()
     lj.set_interaction(0, 0, oz.lennard_jones(lj.r, eps=eps, sig=sig))
 
+    with pytest.raises(PyozError):
+        lj.solve(rhos=0.01, closure_name='RHNC')
     lj.solve(rhos=0.01, closure_name='RHNC', reference_system=wca_ref)
