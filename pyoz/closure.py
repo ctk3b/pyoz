@@ -54,8 +54,8 @@ def partial_series_expansion_n(U_r, e_r, kT,  **kwargs):
 
 
 def duh_henderson(U_r, e_r, kT,  **kwargs):
-    """See: An effective-colloid pair potential for Lennard-Jones colloid–polymer
-    mixtures Orlando Guzmán and Juan J. de Pablo """
+    """See: An effective-colloid pair potential for Lennard-Jones
+    colloid–polymer mixtures Orlando Guzmán and Juan J. de Pablo """
     pass
 
 

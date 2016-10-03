@@ -52,7 +52,7 @@ raw_data = xr.DataArray(data=data,
 e_r = None
 for n, (T, rho) in enumerate(it.product(Ts, rhos)):
     oz.logger.info('T={:.3f}, rho={:.3f}'.format(T, rho))
-    unary = oz.System(T=T)
+    unary = oz.System(kT=T)
 
     # Solve for the reference state.
     unary.set_interaction(0, 0, oz.wca(unary.r, eps=eps / T, sig=sig, m=12, n=6))
@@ -72,7 +72,7 @@ for n, (T, rho) in enumerate(it.product(Ts, rhos)):
     ax_sk.plot(k, S_k[0, 0], lw=1.5, label=label)
 
     # Solve for the actual state.
-    unary = oz.System(T=T)
+    unary = oz.System(kT=T)
     unary.set_interaction(0, 0, oz.lennard_jones(unary.r, eps=eps / T, sig=sig))
     try:
         g_r, c_r, e_r, S_k = unary.solve(

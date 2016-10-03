@@ -109,7 +109,7 @@ def run(eps, NaCl_wt_perc, SiO2_wt_perc, m=100, n=50, T=298, prefix=''):
     # NOTE: Temperatures other than 298 K invalidate the Debye length
     # approximation used: kappa^-1 = 0.304 / sqrt(I(M))
     dr = 0.01
-    syst = oz.System(T=1, dr=dr, n_points=8192)
+    syst = oz.System(kT=1, dr=dr, n_points=8192)
     d = 40 * u.nanometer
     A, l_debye = LR_parameters(colloid_diameter=d,  NaCl_wt_perc=NaCl_wt_perc)
     # A = 0
@@ -122,7 +122,7 @@ def run(eps, NaCl_wt_perc, SiO2_wt_perc, m=100, n=50, T=298, prefix=''):
 
     # for mix in [0.8, 0.9, 0.7, 0.5]:
     for mix in [0.8]:
-        # syst = oz.System(T=1 / eps, dr=dr, n_points=8192)
+        # syst = oz.System(kT=1 / eps, dr=dr, n_points=8192)
         # syst.set_interaction(0, 0, salr_ref)
         # try:
         #     g_r, c_r, e_r, S_k = syst.solve(
@@ -135,7 +135,7 @@ def run(eps, NaCl_wt_perc, SiO2_wt_perc, m=100, n=50, T=298, prefix=''):
         # g_r_ref = g_r
         # S_k_ref = S_k
         #
-        # syst = oz.System(T=1 / eps, dr=dr, n_points=8192)
+        # syst = oz.System(kT=1 / eps, dr=dr, n_points=8192)
         # syst.set_interaction(0, 0, salr)
         # try:
         #     g_r, c_r, e_r, S_k = syst.solve(
@@ -145,7 +145,7 @@ def run(eps, NaCl_wt_perc, SiO2_wt_perc, m=100, n=50, T=298, prefix=''):
         # except PyozError as e:
         #     print('Mix', mix, e)
         #     continue
-        syst = oz.System(T=1, dr=dr, n_points=8192)
+        syst = oz.System(kT=1, dr=dr, n_points=8192)
         syst.set_interaction(0, 0, salr)
         try:
             g_r, c_r, e_r, S_k = syst.solve(

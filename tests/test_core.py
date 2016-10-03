@@ -54,7 +54,7 @@ def test_remove_interaction():
     assert s.U_r.shape == (3, 3, s.n_points)
     assert s.U_r[0, 0, -1] == s.n_points
     assert s.U_r[1, 1, -1] == s.n_points + 10
-    assert s.U_r[2, 2, -1] == s.n_points + 10
+    assert s.U_r[2, 2, -1] == s.n_points + 20
 
     s.remove_interaction(0, 0)
     assert s.U_r.shape == (2, 2, s.n_points)
@@ -63,7 +63,7 @@ def test_remove_interaction():
 
 
 def test_resolve():
-    s1 = oz.System(T=1)
+    s1 = oz.System()
 
     s1.set_interaction(0, 0, oz.wca(s1.r, eps=1, sig=1, m=12, n=6))
     results_1 = s1.solve(rhos=[0.1])
@@ -76,7 +76,7 @@ def test_resolve():
 
 
 def test_start_solve():
-    s1 = oz.System(T=1)
+    s1 = oz.System()
 
     with pytest.raises(TypeError):
         s1.solve()
@@ -95,4 +95,10 @@ def test_start_solve():
     s1.solve(rhos=[0.1])
 
 
+def test_two_component_lj(two_component_lj):
+    n_components = two_component_lj.n_components
+    assert np.allclose(two_component_lj.g_r[:, :, :10],
+                       np.zeros(shape=(n_components, n_components, 10)))
+    assert np.allclose(two_component_lj.g_r[:, :, -10:],
+                       np.ones(shape=(n_components, n_components, 10)))
 

@@ -29,7 +29,7 @@ def _get_closure_func(closure_name, **kwargs):
 class System(object):
     def __init__(self, name='System', **kwargs):
         self.name = name
-        self.T = kwargs.get('T') or 1
+        self.kT = kwargs.get('kT') or 1
 
         # Algorithm control
         # =================
@@ -54,6 +54,7 @@ class System(object):
 
         # Results get stored after `System.solve` successfully completes.
         self.g_r = self.h_r = self.c_r = self.e_r = self.S_k = None
+        self.closure_used = None
 
     @property
     def n_components(self):
@@ -72,9 +73,6 @@ class System(object):
         if symmetric and comp1_idx != comp2_idx:
             self.U_r[comp2_idx, comp1_idx] = potential
 
-        if symmetric and comp1_idx != comp2_idx:
-            self.U_r[comp2_idx, comp1_idx] = potential
-
     def remove_interaction(self, comp1_idx, comp2_idx):
         # Needs to reduce size of U_r if comp1_idx == comp2_idx
         raise NotImplementedError
@@ -84,6 +82,7 @@ class System(object):
         rhos = self._validate_solve_inputs(rhos)
         closure = _get_closure_func(closure_name, **kwargs)
         self._set_rhos(rhos)
+        self.closure_used = closure
 
         U_r = self.U_r
         n_components = self.n_components
@@ -114,7 +113,7 @@ class System(object):
             e_r_previous = np.copy(e_r)
 
             # Apply the closure relation.
-            c_r = closure(U_r, e_r, self.T, **kwargs)
+            c_r = closure(U_r, e_r, self.kT, **kwargs)
 
             # Take us to fourier space.
             for i, j in np.ndindex(n_components, n_components):
@@ -155,7 +154,7 @@ class System(object):
         end = time.time()
 
         # Set before S_k error so you can still extract info if unphysical.
-        c_r = closure(U_r, e_r, self.T, **kwargs)
+        c_r = closure(U_r, e_r, self.kT, **kwargs)
         self.c_r = c_r
         self.g_r = g_r = c_r + e_r + 1
         self.h_r = g_r - 1

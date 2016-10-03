@@ -34,7 +34,7 @@ kappa = 1 / deb_l
 print(deb_l)
 
 # Initialize a blank system and a Lennard-Jones potential with mixing rules.
-lj_coul_binary = oz.System(T=T, n_points=16384, dr=0.02)
+lj_coul_binary = oz.System(kT=T, n_points=16384, dr=0.02)
 r = lj_coul_binary.r
 k = lj_coul_binary.k
 
@@ -85,7 +85,7 @@ for i, j in np.ndindex(lj_coul_binary.n_components, lj_coul_binary.n_components)
 # import ipdb; ipdb.set_trace()
 
 # Initialize a blank system and a Lennard-Jones potential with mixing rules.
-lj_coul_binary = oz.System(T=T, n_points=16384, dr=0.02)
+lj_coul_binary = oz.System(kT=T, n_points=16384, dr=0.02)
 r = lj_coul_binary.r
 k = lj_coul_binary.k
 
@@ -130,7 +130,7 @@ for i, j in np.ndindex(lj_coul_binary.n_components, lj_coul_binary.n_components)
     ax3.plot(k, S_k[i, j], lw=1.5, label='{}{}'.format(i, j))
 
 
-lj_coul_binary = oz.System(T=T, n_points=16384, dr=0.02)
+lj_coul_binary = oz.System(kT=T, n_points=16384, dr=0.02)
 r = lj_coul_binary.r
 k = lj_coul_binary.k
 

@@ -21,7 +21,7 @@ rho2 = 0.01 / sig1**3
 
 
 # Initialize a blank system and a Lennard-Jones potential with mixing rules.
-lj_binary = oz.System(T=T, dr=0.01, n_points=8192)
+lj_binary = oz.System(kT=T, dr=0.01, n_points=8192)
 r = lj_binary.r
 lj_binary.set_interaction(0, 0, oz.lennard_jones(r, sig=sig0, eps=eps0))
 lj_binary.set_interaction(0, 1, oz.lennard_jones(r, sig=sig01, eps=eps01))

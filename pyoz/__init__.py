@@ -4,7 +4,7 @@ import logging
 
 from pyoz.core import System
 from pyoz.potentials import *
-from pyoz.thermodynamic_properties import *
+from pyoz.properties import *
 from pyoz import unit
 
 

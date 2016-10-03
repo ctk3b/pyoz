@@ -1,6 +1,9 @@
 import numpy as np
 from scipy.integrate import simps as integrate
 
+from pyoz.closure import hypernetted_chain, reference_hypernetted_chain
+from pyoz.exceptions import PyozError
+
 
 __all__ = ['kirkwood_buff_integrals',
            'excess_chemical_potential',
@@ -27,7 +30,7 @@ def pressure_virial(system):
     P = \rho * \beta - 2/3 * pi * int_0^inf [(r*dU/dr) * g(r) * r^2]dr
 
     """
-    r, g_r, U_r, rho, T = system.r, system.g_r, system.U_r, system.rho, system.T
+    r, g_r, U_r, rho, kT = system.r, system.g_r, system.U_r, system.rho, system.kT
     if g_r.shape[0] != 1:
         raise NotImplementedError('Pressure calculation not yet implemented '
                                   'for multi-component systems.')
@@ -40,33 +43,33 @@ def pressure_virial(system):
     r = r[min_r:-1]
 
     integral = integrate(y=r**3 * g_r * dUdr, x=r)
-    return rho*system.T - 2/3 * np.pi * rho**2 * integral
+    return rho * kT - 2/3 * np.pi * rho**2 * integral
 
 
-# TODO: double check kT
 def excess_chemical_potential(system):
     """Compute the excess chemical potentials.
 
     \beta mu_i^{ex} = \sum_i 4 \pi \rho_i  *
                             \int [ h(r) * e(r) / 2 - c^s(r) ] r^2 dr
 
-    Currently only the HNC approximation is supported.
+    Only valid for the HNC closure.
 
     """
-    # TODO: proper handling for short range c^s(r)
-    r, h_r, e_r, cs_r = system.r, system.h_r, system.e_r, system.c_r
+    if system.closure_used not in (hypernetted_chain,
+                                   reference_hypernetted_chain):
+        raise PyozError('Excess chemical potential calculation is only valid'
+                        'for hyper-netted chain closures.')
+    r, h_r, e_r, c_r, kT = system.r, system.h_r, system.e_r, system.c_r, system.kT
+    rho = system.rho
     n_components = system.n_components
-    mu_ex = np.empty(shape=n_components)
+    mu_ex = np.zeros(shape=n_components)
     for i in range(n_components):
-        mu = 0.0
         for j in range(n_components):
-            rho_j = system.rho[j]
-            integrand = 0.5 * h_r[i, j] * e_r[i, j] - cs_r[i, j]
-            mu += 4.0 * np.pi * rho_j * integrate(y=integrand * r**2,
-                                                  x=r,
-                                                  even='last')
-        mu_ex[i] = mu
-    return mu_ex
+            integrand = ((h_r[i, j] * e_r[i, j]) / 2 - c_r[i, j]) * r**2
+            mu_ex[i] += 4.0 * np.pi * rho[j] * integrate(y=integrand,
+                                                         x=r,
+                                                         even='last')
+    return mu_ex * kT
 
 
 def two_particle_excess_entropy(system):
@@ -82,15 +85,15 @@ def two_particle_excess_entropy(system):
 
 
 def second_virial_coefficient(system):
-    r, U_r, T = system.r, system.U_r[0, 0], system.T
-    return -2 * np.pi * integrate(y=(np.exp(-U_r / T) - 1) * r**2, x=r)
+    r, U_r, kT = system.r, system.U_r[0, 0], system.kT
+    return -2 * np.pi * integrate(y=(np.exp(-U_r / kT) - 1) * r**2, x=r)
 
 
 def isothermal_compressibility(system):
     if system.r.shape[0] > 1:
         raise NotImplementedError('Compressibility calculation not yet '
                                   'implemented for multi-component systems.')
-    return system.S_k[0] / system.rho[0] / system.T
+    return system.S_k[0] / system.rho[0] / system.kT
 
 
 def activity_coefficient(system):
