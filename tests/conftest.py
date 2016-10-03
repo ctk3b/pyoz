@@ -7,6 +7,7 @@ from pyoz.potentials import arithmetic, geometric
 
 @pytest.fixture(scope='session')
 def two_component_lj():
+    """Return a solved ,unary Lennard-Jones system. """
     T = 1
     sig = np.array([1, 2])
     eps = np.array([1, 0.75])

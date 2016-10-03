@@ -19,6 +19,9 @@ def test_init_system():
 def test_add_interaction():
     s = oz.System()
 
+    with pytest.raises(PyozError):
+        s.set_interaction(0, 0, range(s.n_points - 1))
+
     s.set_interaction(0, 0, range(s.n_points))
     assert s.U_r.shape == (1, 1, s.n_points)
 

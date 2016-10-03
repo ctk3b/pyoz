@@ -45,8 +45,9 @@ class System(object):
         return self.U_r.shape[0]
 
     def set_interaction(self, comp1_idx, comp2_idx, potential, symmetric=True):
+        potential = np.array(potential)
         if len(potential) != self.n_points:
-            raise PyozError('Attempted to add values at {} points to potential'
+            raise PyozError('Attempted to add values at {} points to potential '
                             'with {} points.'.format(potential.shape, self.n_points))
         if comp1_idx >= self.n_components or comp2_idx >= self.n_components:
             n_bigger = max(comp1_idx, comp2_idx) - self.U_r.shape[0] + 1
@@ -66,7 +67,7 @@ class System(object):
         rhos = self._validate_solve_inputs(rhos)
         self._set_rhos(rhos)
 
-        # Lookup the closure
+        # Lookup the closure.
         try:
             closure = supported_closures[closure_name.upper()]
         except KeyError:
