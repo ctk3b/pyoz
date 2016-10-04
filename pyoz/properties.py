@@ -73,18 +73,21 @@ def excess_chemical_potential(system):
 
 
 def second_virial_coefficient(system):
-    r, U_r, kT, rho = system.r, system.U_r[0, 0], system.kT, system.rho
-    if r.shape[0] not in (1, 2):
-        raise NotImplementedError('Entropy calculation not yet '
+    r, U_r, kT, rho = system.r, system.U_r, system.kT, system.rho
+    if U_r.shape[0] == 1:
+        return -2 * np.pi * integrate(y=(np.exp(-U_r[0, 0] / kT) - 1) * r**2, x=r)
+    elif U_r.shape[0] == 2:
+        x = rho.diagonal() / rho.diagonal().sum()
+        B2 = 0
+        for i, j in np.ndindex(U_r.shape):
+            U_ij = U_r[i, j]
+            B2_ij = -2 * np.pi * integrate(y=(np.exp(-U_ij / kT) - 1) * r**2, x=r)
+            B2 += x[i] * x[j] * B2_ij
+        return B2
+    else:
+        raise NotImplementedError('Virial calculation not yet '
                                   'implemented for systems with more than two '
                                   'components.')
-    x = rho.diagonal() / rho.diagonal().sum()
-    B2 = 0
-    for i, j in np.ndindex(U_r.shape):
-        U_ij = U_r[i, j]
-        B2_ij = -2 * np.pi * integrate(y=(np.exp(-U_ij / kT) - 1) * r**2, x=r)
-        B2 += x[i] * x[j] * B2_ij
-    return B2
 
 
 def two_particle_excess_entropy(system):
@@ -92,16 +95,15 @@ def two_particle_excess_entropy(system):
 
     Eqn. 9 in A Baranyi and DJ Evans, Phys. Rev. A., 1989
     """
-    r, g_r, rho = system.r, system.g_r[0, 0], system.rho[0]
+    r, g_r, rho = system.r, system.g_r, system.rho[0]
     if g_r.shape[0] > 1:
         raise NotImplementedError('Entropy calculation not yet '
                                   'implemented for multi-component systems.')
+    g_r = g_r[0, 0]
     integrand = np.where(g_r > 0,
                          -0.5 * rho * (g_r * np.log(g_r) - g_r + 1.0),
                          -0.5 * rho)
     return rho * integrate(integrand, r)
-
-
 
 
 def isothermal_compressibility(system):
@@ -119,7 +121,7 @@ def activity_coefficient(system):
     """
     # TODO: add mean activity calculation for charged system
     mu_ex = excess_chemical_potential(system)
-    return np.exp(mu_ex)
+    return np.exp(mu_ex / system.kT)
 
 
 def excess_internal_energy(system):
