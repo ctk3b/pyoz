@@ -37,7 +37,7 @@ class System(object):
         self.rho = None
 
         # Results get stored after `System.solve` successfully completes.
-        self.g_r = self.h_r = self.c_r = self.e_r = self.S_k = None
+        self.g_r = self.h_r = self.c_r = self.e_r = self.H_k = None
         self.closure_used = None
 
     @property
@@ -92,7 +92,7 @@ class System(object):
         g_r : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
         c_r : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
         e_r : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
-        S_k : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
+        H_k : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
 
         """
         rhos = self._validate_solve_inputs(rhos)
@@ -155,7 +155,6 @@ class System(object):
             A = E - C_k
             B = C_k
             H_k = solver(A, B)
-            S_k = 1 + H_k
             E_k = H_k - C_k
 
             # Snap back to reality.
@@ -183,21 +182,21 @@ class System(object):
             raise PyozError('Exceeded max # of iterations: {}'.format(n_iter))
         end = time.time()
 
-        # Set before S_k error so you can still extract info if unphysical.
+        # Set before H_k error so you can still extract info if unphysical.
         c_r = closure(U_r, e_r, self.kT, **kwargs)
         self.c_r = c_r
         self.g_r = g_r = c_r + e_r + 1
         self.h_r = g_r - 1
         self.e_r = e_r
-        self.S_k = S_k
+        self.H_k = H_k
 
-        if (S_k < 0).any():
+        if (H_k < -1).any():
             raise PyozError('Converged to unphysical result.')
 
         logger.info('Converged in {:.2f}s after {} iterations'.format(
             end-start, n_iter)
         )
-        return g_r, c_r, e_r, S_k
+        return g_r, c_r, e_r, H_k
 
     def _validate_solve_inputs(self, rhos):
         if self.U_r.shape[0] == 0:
