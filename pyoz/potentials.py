@@ -13,7 +13,8 @@ def geometric(a, b):
 
 
 def mie(r, eps, sig, m, n):
-    return 4 * eps * ((sig / r)**m - (sig / r)**n)
+    prefactor = (m / (m - n)) * (n / m)**(n / (m - n))
+    return prefactor * eps * ((sig / r)**m - (sig / r)**n)
 
 
 def lennard_jones(r, eps, sig):
