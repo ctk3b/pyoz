@@ -159,9 +159,12 @@ class System(object):
 
             # Snap back to reality.
             for i, j in np.ndindex(n_components, n_components):
-                constant = n_points * self.dk / 4 / np.pi**2 / (n_points + 1) / self.r / self.rho[i, j]
-                transform = idst(E_k[i, j] * self.k, type=1)
-                e_r[i, j] = constant * transform
+                if self.rho[i, j] == 0:
+                    e_r[i, j] = np.zeros_like(self.k)
+                else:
+                    constant = n_points * self.dk / 4 / np.pi**2 / (n_points + 1) / self.r / self.rho[i, j]
+                    transform = idst(E_k[i, j] * self.k, type=1)
+                    e_r[i, j] = constant * transform
 
             # Test for convergence.
             rms_norm = rms_normed(e_r, e_r_previous)
@@ -169,6 +172,7 @@ class System(object):
                 break
 
             if np.isnan(rms_norm) or np.isinf(rms_norm):
+                import ipdb; ipdb.set_trace()
                 raise PyozError('Diverged at iteration # {}'.format(n_iter))
 
             # Iterate.

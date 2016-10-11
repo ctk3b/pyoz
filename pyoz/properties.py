@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import numpy as np
 from scipy.integrate import simps as integrate
 
@@ -6,6 +8,7 @@ from pyoz.exceptions import PyozError
 
 
 __all__ = ['kirkwood_buff_integrals',
+           'structure_factors',
            'excess_chemical_potential',
            'pressure_virial',
            'second_virial_coefficient',
@@ -22,6 +25,105 @@ def kirkwood_buff_integrals(system):
                                    x=r,
                                    even='last')
 
+
+def structure_factors(system, formalism='Faber-Ziman', combination='number-number'):
+    """Compute the partial structure factors.
+
+    Parameters
+    ----------
+    system : pyoz.System
+        The solved system for which to compute structure factors.
+    formalism : str, optional, default='Faber-Ziman'
+        The formalism used to compute the structure factor. Supported values
+        are 'Faber-Ziman', 'Ashcroft-Langreth' and 'Bhatia-Thornton'
+    combination : str, optional, default='number-number'
+        When using the Bhatia-Thornton formalism, specifies whether to return
+        the number-number, number-concentration or concentration-concentration
+        partial structure factors.
+
+    Returns
+    -------
+    S_k : np.ndarray, shape=(n_components, n_components, n_points)
+        The partial structure factors for each species.
+
+    """
+    try:
+        S_k_function = _sk_formalisms[formalism.lower()]
+    except KeyError:
+        keys = '\t'.join(['"{}"\n'.format(x) for x in _sk_formalisms.keys()])
+        raise PyozError('Unsupported structure factor formalism. Valid options '
+                        'are:\n \t{}'.format(keys))
+    return S_k_function(system, combination)
+
+
+def _faber_ziman(system, combination):
+    H_k = system.H_k
+    return 1 + H_k
+
+
+def _ashcroft_langreth(system, combination):
+    H_k = system.H_k
+    E = np.zeros_like(H_k)
+    for n in range(H_k.shape[2]):
+        E[:, :, n] = np.eye(H_k.shape[0])
+    return E + H_k
+
+
+def _bhatia_thornton(system, combination):
+    if system.H_k.shape[0] != 2:
+        raise NotImplementedError('Only implemented for two component systems')
+    try:
+        Sxx_function = _bhatia_thornton_combinations[combination.lower()]
+    except KeyError:
+        keys = '\t'.join(['"{}"\n'.format(x)
+                          for x in _bhatia_thornton_combinations.keys()])
+        raise PyozError('Unsupported combination for Bhatia-Thornton formalism.'
+                        ' Valid options are:\n \t{}'.format(keys))
+    return Sxx_function(system)
+
+
+def _Snn(system):
+    rhos, H_k = np.diag(system.rho), system.H_k
+    return 1 + (    rhos[0] * rhos[0] * H_k[0, 0] +
+                2 * rhos[0] * rhos[1] * H_k[0, 1] +
+                    rhos[1] * rhos[1] * H_k[1, 1])
+
+
+def _Snc(system):
+    rhos, H_k = np.diag(system.rho), system.H_k
+    rho = np.sum(rhos)
+    xs = rhos / rho
+    x_ij = xs[0] * xs[1]
+    return rho * x_ij * (xs[0] * (H_k[0, 0] - H_k[0, 1]) -
+                         xs[1] * (H_k[1, 1] - H_k[0, 1]))
+
+
+def _Scc(system):
+    rhos, H_k = np.diag(system.rho), system.H_k
+    rho = np.sum(rhos)
+    xs = rhos / rho
+    x_ij = xs[0] * xs[1]
+    return x_ij * (1 + rho * x_ij * (H_k[0, 0] +
+                                     H_k[1, 1] -
+                                     2 * H_k[0, 1]))
+
+_sk_formalisms = OrderedDict([('faber-ziman', _faber_ziman),
+                              ('fz', _faber_ziman),
+                              ('ashcroft-langreth', _ashcroft_langreth),
+                              ('al', _ashcroft_langreth),
+                              ('bhatia-thornton', _bhatia_thornton),
+                              ('bt', _bhatia_thornton),
+                 ])
+
+_bhatia_thornton_combinations = OrderedDict([('number-number', _Snn),
+                                             ('nn', _Snn),
+                                             ('number-concentration', _Snc),
+                                             ('nc', _Snc),
+                                             ('concentration-number', _Snc),
+                                             ('cn', _Snc),
+                                             ('concentration-concentration', _Scc),
+                                             ('cc', _Scc)
+                                ])
 
 # TODO: generalize for multi-component
 def pressure_virial(system):
@@ -79,7 +181,7 @@ def second_virial_coefficient(system):
     elif U_r.shape[0] == 2:
         x = rho.diagonal() / rho.diagonal().sum()
         B2 = 0
-        for i, j in np.ndindex(U_r.shape):
+        for i, j in np.ndindex(U_r.shape[:2]):
             U_ij = U_r[i, j]
             B2_ij = -2 * np.pi * integrate(y=(np.exp(-U_ij / kT) - 1) * r**2, x=r)
             B2 += x[i] * x[j] * B2_ij

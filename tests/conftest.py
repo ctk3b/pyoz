@@ -6,8 +6,24 @@ from pyoz.potentials import arithmetic, geometric
 
 
 @pytest.fixture(scope='session')
+def one_component_lj():
+    """Return a solved, unary Lennard-Jones system. """
+    T = 1
+    sig = 1
+    eps = 1
+    rhos = 0.01
+
+    lj = oz.System(kT=T)
+
+    r = lj.r
+    lj.set_interaction(0, 0, oz.lennard_jones(r, eps / T, sig))
+    lj.solve(rhos=rhos, closure_name='hnc')
+    return lj
+
+
+@pytest.fixture(scope='session')
 def two_component_lj():
-    """Return a solved ,unary Lennard-Jones system. """
+    """Return a solved, binary Lennard-Jones system. """
     T = 1
     sig = np.array([1, 2])
     eps = np.array([1, 0.75])
