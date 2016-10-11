@@ -172,7 +172,6 @@ class System(object):
                 break
 
             if np.isnan(rms_norm) or np.isinf(rms_norm):
-                import ipdb; ipdb.set_trace()
                 raise PyozError('Diverged at iteration # {}'.format(n_iter))
 
             # Iterate.
