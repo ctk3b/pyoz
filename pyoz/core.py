@@ -131,8 +131,8 @@ class System(object):
 
         n_iter = 0
         logger = oz.logger
+        logger.info('Initialized: {}'.format(self))
         if status_updates:
-            logger.info('Initialized: {}'.format(self))
             logger.info('Starting iteration...')
             logger.info('   {:8s}{:10s}{:10s}'.format(
                 'step', 'time (s)', 'error'))

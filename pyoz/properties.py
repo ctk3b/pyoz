@@ -26,7 +26,8 @@ def kirkwood_buff_integrals(system):
                                    even='last')
 
 
-def structure_factors(system, formalism='Faber-Ziman', combination='number-number'):
+def structure_factors(system, formalism='Faber-Ziman',
+                      combination='number-number'):
     """Compute the partial structure factors.
 
     Parameters
@@ -84,9 +85,11 @@ def _bhatia_thornton(system, combination):
 
 def _Snn(system):
     rhos, H_k = np.diag(system.rho), system.H_k
-    return 1 + (    rhos[0] * rhos[0] * H_k[0, 0] +
-                2 * rhos[0] * rhos[1] * H_k[0, 1] +
-                    rhos[1] * rhos[1] * H_k[1, 1])
+    rho = np.sum(rhos)
+    xs = rhos / rho
+    return 1 + rho * (    xs[0] * xs[0] * H_k[0, 0] +
+                      2 * xs[0] * xs[1] * H_k[0, 1] +
+                          xs[1] * xs[1] * H_k[1, 1])
 
 
 def _Snc(system):
@@ -103,8 +106,8 @@ def _Scc(system):
     rho = np.sum(rhos)
     xs = rhos / rho
     x_ij = xs[0] * xs[1]
-    return x_ij * (1 + rho * x_ij * (H_k[0, 0] +
-                                     H_k[1, 1] -
+    return x_ij * (1 + rho * x_ij * (    H_k[0, 0] +
+                                         H_k[1, 1] -
                                      2 * H_k[0, 1]))
 
 _sk_formalisms = OrderedDict([('faber-ziman', _faber_ziman),
@@ -113,7 +116,7 @@ _sk_formalisms = OrderedDict([('faber-ziman', _faber_ziman),
                               ('al', _ashcroft_langreth),
                               ('bhatia-thornton', _bhatia_thornton),
                               ('bt', _bhatia_thornton),
-                 ])
+])
 
 _bhatia_thornton_combinations = OrderedDict([('number-number', _Snn),
                                              ('nn', _Snn),
@@ -122,8 +125,8 @@ _bhatia_thornton_combinations = OrderedDict([('number-number', _Snn),
                                              ('concentration-number', _Snc),
                                              ('cn', _Snc),
                                              ('concentration-concentration', _Scc),
-                                             ('cc', _Scc)
-                                ])
+                                             ('cc', _Scc),
+])
 
 # TODO: generalize for multi-component
 def pressure_virial(system):

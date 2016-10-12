@@ -93,12 +93,35 @@ def test_start_solve():
     s1.solve(rhos=[0.1])
 
 
-def test_two_component_lj(two_component_lj):
-    n_components = two_component_lj.n_components
-    assert np.allclose(two_component_lj.g_r[:, :, :10],
-                       np.zeros(shape=(n_components, n_components, 10)))
-    assert np.allclose(two_component_lj.g_r[:, :, -10:],
-                       np.ones(shape=(n_components, n_components, 10)))
+def test_two_component_identical(one_component_lj, two_component_identical_lj):
+    one = one_component_lj
+    two = two_component_identical_lj
+
+    assert np.allclose(one.U_r[0, 0], two.U_r[0, 0], equal_nan=True)
+    assert np.allclose(one.U_r[0, 0], two.U_r[0, 1], equal_nan=True)
+    assert np.allclose(one.U_r[0, 0], two.U_r[1, 1], equal_nan=True)
+
+    assert np.allclose(one.g_r[0, 0], two.g_r[0, 0], equal_nan=True)
+    assert np.allclose(one.g_r[0, 0], two.g_r[0, 1], equal_nan=True)
+    assert np.allclose(one.g_r[0, 0], two.g_r[1, 1], equal_nan=True)
+
+    assert np.allclose(one.H_k[0, 0] / 2, two.H_k[0, 0], equal_nan=True)
+    assert np.allclose(one.H_k[0, 0] / 2, two.H_k[0, 1], equal_nan=True)
+    assert np.allclose(one.H_k[0, 0] / 2, two.H_k[1, 1], equal_nan=True)
+
+
+def test_one_inf_dilute(one_component_lj, two_component_one_inf_dilute_lj):
+    one = one_component_lj
+    two = two_component_one_inf_dilute_lj
+
+    assert np.allclose(one.U_r[0, 0], two.U_r[0, 0])
+    assert np.allclose(one.g_r[0, 0], two.g_r[0, 0])
+    assert np.allclose(one.H_k[0, 0], two.H_k[0, 0])
+
+    assert np.allclose(two.g_r[0, 1], np.exp(-two.U_r[0, 1]))
+    assert np.allclose(two.g_r[1, 1], np.exp(-two.U_r[1, 1]))
+    assert not np.any(two.H_k[0, 1])
+    assert not np.any(two.H_k[1, 1])
 
 
 def test_solve_with_reference():

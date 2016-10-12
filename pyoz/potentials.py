@@ -13,7 +13,7 @@ def geometric(a, b):
 
 
 def mie(r, eps, sig, m, n):
-    prefactor = (m / (m - n)) * (n / m)**(n / (m - n))
+    prefactor = (m / (m - n)) * (m / n)**(n / (m - n))
     return prefactor * eps * ((sig / r)**m - (sig / r)**n)
 
 
