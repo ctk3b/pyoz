@@ -47,6 +47,10 @@ def structure_factors(system, formalism='Faber-Ziman',
     S_k : np.ndarray, shape=(n_components, n_components, n_pts)
         The partial structure factors for each species.
 
+    References
+    ----------
+    .. [1] http://isaacs.sourceforge.net/phys/scatt.html
+
     """
     try:
         S_k_function = _sk_formalisms[formalism.lower()]
