@@ -121,87 +121,25 @@ def run(eps, NaCl_wt_perc, SiO2_wt_perc, Z, m=100, n=50, T=298, prefix=''):
     # wca = oz.wca(syst.r, eps=1, sig=1, m=m, n=n)
     rho = number_densities(SiO2_wt_perc=SiO2_wt_perc)
 
-    # for mix in [0.8, 0.9, 0.7, 0.5]:
-    for mix in [0.8]:
-        # syst = oz.System(kT=1 / eps, dr=dr, n_pts=8192)
-        # syst.set_interaction(0, 0, salr_ref)
-        # try:
-        #     g_r, c_r, e_r, S_k = syst.solve(
-        #         rhos=rho, closure_name='hnc', mix_param=0.8,
-        #         status_updates=False)
-        # except PyozError as e:
-        #     print('WCA failed', e)
-        #     continue
-        # U_r_ref = syst.U_r
-        # g_r_ref = g_r
-        # S_k_ref = S_k
-        #
-        # syst = oz.System(kT=1 / eps, dr=dr, n_pts=8192)
-        # syst.set_interaction(0, 0, salr)
-        # try:
-        #     g_r, c_r, e_r, S_k = syst.solve(
-        #         rhos=rho, closure_name='rhnc', mix_param=mix,
-        #         status_updates=False, max_iter=5000,
-        #         initial_e_r=e_r, e_r_ref=e_r, U_r_ref=U_r_ref, g_r_ref=g_r_ref)
-        # except PyozError as e:
-        #     print('Mix', mix, e)
-        #     continue
-        syst = oz.System(kT=1, dr=dr, n_points=8192)
-        syst.set_interaction(0, 0, salr)
-        try:
-            g_r, c_r, e_r, S_k = syst.solve(
-                rhos=rho, closure_name='hnc', mix_param=0.8,
-                status_updates=False)
-        except PyozError as e:
-            print('LJ failed', e)
-            continue
-        else:
-            B2 = oz.second_virial_coefficient(syst)
-            # print(eps, B2)
-            P_virial = oz.pressure_virial(syst)
-            mu_ex = oz.excess_chemical_potential(syst)[0]
-            mu = mu_ex + T * np.log(rho)
-            s2 = oz.two_particle_excess_entropy(syst)[0]
-            break
+    syst = oz.System(kT=1, dr=dr, n_points=8192)
+    syst.set_interaction(0, 0, salr)
+
+    g_r, c_r, e_r, H_k = syst.solve(
+            rhos=rho, closure_name='hnc', mix_param=0.8,
+            status_updates=False)
+
+    if np.isnan(g_r).all():
+        g_r = c_r = e_r = S_k = np.empty_like(syst.r)
+        g_r[:] = c_r[:] = e_r[:] = S_k[:] = np.nan
+        B2 = P_virial = mu = s2 = np.nan
     else:
-        # g_r = c_r = e_r = S_k = B2 = P_virial = mu = s2 = g_r_ref = S_k_ref = np.nan
-        g_r = c_r = e_r = S_k = B2 = P_virial = mu = s2 = np.nan
-
-    if g_r is np.nan:
-        g_r = np.empty_like(syst.r)
-        g_r[:] = np.nan
-    else:
-        g_r = g_r[0, 0]
-
-    # if g_r_ref is np.nan:
-    #     g_r_ref = np.empty_like(syst.r)
-    #     g_r_ref[:] = np.nan
-    # else:
-    #     g_r_ref = g_r_ref[0, 0]
-
-    if c_r is np.nan:
-        c_r = np.empty_like(syst.r)
-        c_r[:] = np.nan
-    else:
-        c_r = c_r[0, 0]
-
-    if e_r is np.nan:
-        e_r = np.empty_like(syst.r)
-        e_r[:] = np.nan
-    else:
-        e_r = e_r[0, 0]
-
-    if S_k is np.nan:
-        S_k = np.empty_like(syst.r)
-        S_k[:] = np.nan
-    else:
-        S_k = S_k[0, 0]
-
-    # if S_k_ref is np.nan:
-    #     S_k_ref = np.empty_like(syst.r)
-    #     S_k_ref[:] = np.nan
-    # else:
-    #     S_k_ref = S_k_ref[0, 0]
+        B2 = oz.second_virial_coefficient(syst)
+        # print(eps, B2)
+        P_virial = oz.pressure_virial(syst)
+        mu_ex = oz.excess_chemical_potential(syst)[0]
+        mu = mu_ex + T * np.log(rho)
+        s2 = oz.two_particle_excess_entropy(syst)[0]
+        S_k = oz.structure_factors(syst)[0, 0]
 
     U_r = syst.U_r[0, 0]
     data = {'r': syst.r,

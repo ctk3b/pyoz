@@ -57,38 +57,30 @@ def run(x, rho, a_ii=1.0, a_jj=1.0, a_ij=1.0, kT=1, prefix='', output_dir=''):
 
     rhos = [x * rho, (1-x) * rho]
 
-    # for mix in [0.8, 0.9, 0.7, 0.5]:
-    for mix in [0.8]:
-        try:
-            g_r, c_r, e_r, H_k = syst.solve(
-                rhos=rhos, closure_name='hnc', #reference_system=ref,
-                mix_param=mix, status_updates=False, max_iter=5000)
-        except PyozError as e:
-            print(e)
-            continue
-        else:
-            B2 = oz.second_virial_coefficient(syst)
-            # print(eps, B2)
-            # P_virial = oz.pressure_virial(syst)
-            P_virial = np.nan
-            # mu_ex = oz.excess_chemical_potential(syst)[0]
-            # mu = mu_ex + kT * np.log(rho)
-            mu = np.nan
-            # s2 = oz.two_particle_excess_entropy(syst)[0]
-            s2 = np.nan
-            Snn = oz.structure_factors(syst, formalism='bt', combination='nn')
-            Snc = oz.structure_factors(syst, formalism='bt', combination='nc')
-            Scc = oz.structure_factors(syst, formalism='bt', combination='cc')
-            S_k = oz.structure_factors(syst, formalism='fz')
-            break
-    else:
-        g_r = c_r = e_r = S_k = np.empty_like(syst.U_r)
-        g_r[:] = c_r[:] = e_r[:] = S_k[:] = np.nan
+    g_r, c_r, e_r, H_k = syst.solve(
+        rhos=rhos, closure_name='hnc', #reference_system=ref,
+        mix_param=0.8, status_updates=False, max_iter=5000)
 
+    if np.isnan(g_r).all():
+        S_k = np.empty_like(syst.U_r)
+        S_k[:] = np.nan
         Snn = Snc = Scc = np.empty_like(syst.r)
         Snn[:] = Snc[:] = Scc[:] = np.nan
-
         B2 = P_virial = mu = s2 = np.nan
+    else:
+        B2 = oz.second_virial_coefficient(syst)
+        # print(eps, B2)
+        # P_virial = oz.pressure_virial(syst)
+        P_virial = np.nan
+        # mu_ex = oz.excess_chemical_potential(syst)[0]
+        # mu = mu_ex + kT * np.log(rho)
+        mu = np.nan
+        # s2 = oz.two_particle_excess_entropy(syst)[0]
+        s2 = np.nan
+        Snn = oz.structure_factors(syst, formalism='bt', combination='nn')
+        Snc = oz.structure_factors(syst, formalism='bt', combination='nc')
+        Scc = oz.structure_factors(syst, formalism='bt', combination='cc')
+        S_k = oz.structure_factors(syst, formalism='fz')
 
     # U_r = syst.U_r[0, 0]
     data = {'r': syst.r,
