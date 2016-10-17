@@ -123,7 +123,7 @@ def run(eps, NaCl_wt_perc, SiO2_wt_perc, Z, m=100, n=50, T=298, prefix=''):
 
     # for mix in [0.8, 0.9, 0.7, 0.5]:
     for mix in [0.8]:
-        # syst = oz.System(kT=1 / eps, dr=dr, n_points=8192)
+        # syst = oz.System(kT=1 / eps, dr=dr, n_pts=8192)
         # syst.set_interaction(0, 0, salr_ref)
         # try:
         #     g_r, c_r, e_r, S_k = syst.solve(
@@ -136,7 +136,7 @@ def run(eps, NaCl_wt_perc, SiO2_wt_perc, Z, m=100, n=50, T=298, prefix=''):
         # g_r_ref = g_r
         # S_k_ref = S_k
         #
-        # syst = oz.System(kT=1 / eps, dr=dr, n_points=8192)
+        # syst = oz.System(kT=1 / eps, dr=dr, n_pts=8192)
         # syst.set_interaction(0, 0, salr)
         # try:
         #     g_r, c_r, e_r, S_k = syst.solve(

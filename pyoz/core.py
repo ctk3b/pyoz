@@ -18,12 +18,12 @@ class System(object):
         # Algorithm control
         # =================
         n_points_exp = kwargs.get('n_points_exp') or 12
-        self.n_points = kwargs.get('n_points') or 2**n_points_exp
-        self.n_points -= 1
+        self.n_pts = kwargs.get('n_pts') or 2 ** n_points_exp
+        self.n_pts -= 1
 
         self.dr = kwargs.get('dr') or 0.01
 
-        max_r = self.dr * self.n_points
+        max_r = self.dr * self.n_pts
         self.dk = np.pi / max_r
 
         # System info
@@ -31,9 +31,9 @@ class System(object):
         # TODO: units
         dr = self.dr
         dk = self.dk
-        self.r = np.linspace(dr, self.n_points * dr - dr, self.n_points)
-        self.k = np.linspace(dk, self.n_points * dk - dk, self.n_points)
-        self.U_r = np.zeros(shape=(0, 0, self.n_points))
+        self.r = np.linspace(dr, self.n_pts * dr - dr, self.n_pts)
+        self.k = np.linspace(dk, self.n_pts * dk - dk, self.n_pts)
+        self.U_r = np.zeros(shape=(0, 0, self.n_pts))
         self.rho = None
 
         # Results get stored after `System.solve` successfully completes.
@@ -53,19 +53,19 @@ class System(object):
             The index of a component interacting with this potential.
         comp2_idx : int
             The index of the other component interacting with this potential.
-        potential : np.ndarray, shape=(n_points,), dtype=float
+        potential : np.ndarray, shape=(n_pts,), dtype=float
             Values of the potential at all points in self.r
 
         """
         potential = np.array(potential)
-        if len(potential) != self.n_points:
+        if len(potential) != self.n_pts:
             raise PyozError('Attempted to add values at {} points to potential '
-                            'with {} points.'.format(potential.shape, self.n_points))
+                            'with {} points.'.format(len(potential), self.n_pts))
         if comp1_idx >= self.n_components or comp2_idx >= self.n_components:
             n_bigger = max(comp1_idx, comp2_idx) - self.U_r.shape[0] + 1
             self.U_r.resize((self.U_r.shape[0] + n_bigger,
                              self.U_r.shape[1] + n_bigger,
-                             self.n_points))
+                             self.n_pts))
         self.U_r[comp1_idx, comp2_idx] = potential
         self.U_r[comp2_idx, comp1_idx] = potential
 
@@ -81,7 +81,7 @@ class System(object):
         ----------
         rhos : float or list-like
         closure_name : str
-        initial_e_r : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
+        initial_e_r : np.ndarray, shape=(n_comps, n_comps, n_pts), dtype=float
         mix_param : float
         tol : float
         status_updates : bool
@@ -89,14 +89,23 @@ class System(object):
 
         Returns
         -------
-        g_r : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
-        c_r : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
-        e_r : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
-        H_k : np.ndarray, shape=(n_comps, n_comps, n_points), dtype=float
+        g_r : np.ndarray, shape=(n_comps, n_comps, n_pts), dtype=float
+        c_r : np.ndarray, shape=(n_comps, n_comps, n_pts), dtype=float
+        e_r : np.ndarray, shape=(n_comps, n_comps, n_pts), dtype=float
+        H_k : np.ndarray, shape=(n_comps, n_comps, n_pts), dtype=float
 
         """
+        # Bring some unchanging variables into the local namespace.
         rhos = self._validate_solve_inputs(rhos)
-        self._set_rhos(rhos)
+        rho_ij = self._set_rhos(rhos)
+
+        U_r = self.U_r
+        n_components = self.n_components
+        n_pts = self.n_pts
+        r = self.r
+        dr = self.dr
+        k = self.k
+        dk = self.dk
 
         # Lookup the closure.
         try:
@@ -107,26 +116,24 @@ class System(object):
         # Perform reference system calculation if necessary.
         if closure_name.upper() == 'RHNC':
             if kwargs.get('reference_system') is None:
-                raise PyozError('Missing `reference_system` parameter for RHNC closure.')
+                raise PyozError('Missing `reference_system` parameter for RHNC'
+                                ' closure.')
 
             ref_system = kwargs['reference_system']
-            _, _, initial_e_r, _ = ref_system.solve(rhos=rhos, closure_name='HNC', **kwargs)
+            _, _, initial_e_r, _ = ref_system.solve(rhos=rhos,
+                                                    closure_name='HNC',
+                                                    **kwargs)
 
         self.closure_used = closure
-
-        U_r = self.U_r
-        n_components = self.n_components
-        n_points = self.n_points
-
         if initial_e_r is None:
             e_r = np.zeros_like(U_r)
         else:
             e_r = initial_e_r
 
-        matrix_shape = (n_components, n_components, n_points)
+        matrix_shape = (n_components, n_components, n_pts)
         C_k = np.zeros(matrix_shape)
         E = np.zeros(matrix_shape)
-        for n in range(n_points):
+        for n in range(n_pts):
             E[:, :, n] = np.eye(n_components)
 
         n_iter = 0
@@ -147,8 +154,8 @@ class System(object):
 
             # Take us to fourier space.
             for i, j in np.ndindex(n_components, n_components):
-                constant = 2 * np.pi * self.rho[i, j] * self.dr / self.k
-                transform = dst(c_r[i, j] * self.r, type=1)
+                constant = 2 * np.pi * rho_ij[i, j] * dr / k
+                transform = dst(c_r[i, j] * r, type=1)
                 C_k[i, j] = constant * transform
 
             # Solve dat equation.
@@ -159,11 +166,12 @@ class System(object):
 
             # Snap back to reality.
             for i, j in np.ndindex(n_components, n_components):
-                if self.rho[i, j] == 0:
-                    e_r[i, j] = np.zeros_like(self.k)
+                if rho_ij[i, j] == 0:
+                    e_r[i, j] = np.zeros_like(k)
                 else:
-                    constant = n_points * self.dk / 4 / np.pi**2 / (n_points + 1) / self.r / self.rho[i, j]
-                    transform = idst(E_k[i, j] * self.k, type=1)
+                    constant = n_pts * dk / 4 / np.pi**2 / (n_pts + 1) / r
+                    constant /= rho_ij[i, j]
+                    transform = idst(E_k[i, j] * k, type=1)
                     e_r[i, j] = constant * transform
 
             # Test for convergence.
@@ -217,6 +225,7 @@ class System(object):
         for i, j in np.ndindex(self.rho.shape):
             rho_ij = np.sqrt(rhos[i] * rhos[j])
             self.rho[i, j] = rho_ij
+        return self.rho
 
     def __repr__(self):
         descr = list('<{}'.format(self.name))

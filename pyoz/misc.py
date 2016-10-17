@@ -19,7 +19,7 @@ from pyoz.exceptions import PyozError
 def rms_normed(A, B):
     """Compute the squared and normed distance between two arrays.
 
-    distance = sqrt(sum[(A - B)^2] / (n_points * n_components^2))
+    distance = sqrt(sum[(A - B)^2] / (n_pts * n_components^2))
     """
     distance = ((A - B)**2).sum() / A.shape[2] * A.shape[0]**2
     return np.sqrt(distance)

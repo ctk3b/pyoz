@@ -20,44 +20,44 @@ def test_add_interaction():
     s = oz.System()
 
     with pytest.raises(PyozError):
-        s.set_interaction(0, 0, range(s.n_points - 1))
+        s.set_interaction(0, 0, range(s.n_pts - 1))
 
-    s.set_interaction(0, 0, range(s.n_points))
-    assert s.U_r.shape == (1, 1, s.n_points)
+    s.set_interaction(0, 0, range(s.n_pts))
+    assert s.U_r.shape == (1, 1, s.n_pts)
 
-    s.set_interaction(1, 1, range(s.n_points))
-    assert s.U_r.shape == (2, 2, s.n_points)
+    s.set_interaction(1, 1, range(s.n_pts))
+    assert s.U_r.shape == (2, 2, s.n_pts)
 
-    s.set_interaction(0, 1, range(s.n_points))
-    assert s.U_r.shape == (2, 2, s.n_points)
+    s.set_interaction(0, 1, range(s.n_pts))
+    assert s.U_r.shape == (2, 2, s.n_pts)
     assert (s.U_r[0, 1] == s.U_r[1, 0]).all()
 
-    s.set_interaction(0, 4, range(s.n_points))
-    assert s.U_r.shape == (5, 5, s.n_points)
+    s.set_interaction(0, 4, range(s.n_pts))
+    assert s.U_r.shape == (5, 5, s.n_pts)
 
 
 @pytest.mark.skipif(True, reason='Not implemented yet')
 def test_remove_interaction():
     s = oz.System()
 
-    s.set_interaction(0, 0, range(s.n_points))
-    s.set_interaction(1, 1, range(10, 10 + s.n_points))
-    s.set_interaction(2, 2, range(20, 20 + s.n_points))
-    s.set_interaction(3, 3, range(30, 30 + s.n_points))
+    s.set_interaction(0, 0, range(s.n_pts))
+    s.set_interaction(1, 1, range(10, 10 + s.n_pts))
+    s.set_interaction(2, 2, range(20, 20 + s.n_pts))
+    s.set_interaction(3, 3, range(30, 30 + s.n_pts))
 
     s.remove_interaction(0, 1)
-    assert s.U_r.shape == (4, 4, s.n_points)
+    assert s.U_r.shape == (4, 4, s.n_pts)
 
     s.remove_interaction(3, 3)
-    assert s.U_r.shape == (3, 3, s.n_points)
-    assert s.U_r[0, 0, -1] == s.n_points
-    assert s.U_r[1, 1, -1] == s.n_points + 10
-    assert s.U_r[2, 2, -1] == s.n_points + 20
+    assert s.U_r.shape == (3, 3, s.n_pts)
+    assert s.U_r[0, 0, -1] == s.n_pts
+    assert s.U_r[1, 1, -1] == s.n_pts + 10
+    assert s.U_r[2, 2, -1] == s.n_pts + 20
 
     s.remove_interaction(0, 0)
-    assert s.U_r.shape == (2, 2, s.n_points)
-    assert s.U_r[0, 0, -1] == s.n_points + 10
-    assert s.U_r[1, 1, -1] == s.n_points + 20
+    assert s.U_r.shape == (2, 2, s.n_pts)
+    assert s.U_r[0, 0, -1] == s.n_pts + 10
+    assert s.U_r[1, 1, -1] == s.n_pts + 20
 
 
 def test_resolve():
