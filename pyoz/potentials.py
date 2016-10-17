@@ -1,7 +1,8 @@
 import numpy as np
 
 
-__all__ = ['mie', 'lennard_jones', 'wca', 'coulomb', 'screened_coulomb']
+__all__ = ['mie', 'lennard_jones', 'wca', 'coulomb', 'screened_coulomb', 'dpd',
+           'soft_depletion']
 
 
 def arithmetic(a, b):
@@ -59,3 +60,11 @@ def soft_depletion(r, eps, sig_c, sig_d, n, rho_d):
 
     rep = eps * (sig_c / r)**n
     return rep + depl
+
+
+def dpd(r, a):
+    cutoff = np.abs(r - 1.0).argmin()
+    U = np.zeros_like(r)
+    U[:cutoff] = 0.5 * a * (1 - r[:cutoff])**2
+    return U
+

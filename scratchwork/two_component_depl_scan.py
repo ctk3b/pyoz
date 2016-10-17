@@ -40,26 +40,20 @@ def init_raw_array(r, variables, raw_props):
     return raw_data
 
 
-def run(x, rho, m=12, n=6, eps=1.0, eps_cross=1.0, kT=1, prefix='', output_dir=''):
+def run(x, rho, sig_d, sig_c, rho_d, n=36, eps=1.0, eps_cross=1.0,
+        kT=1, prefix='', output_dir=''):
 
     dr = 0.01
     syst = oz.System(kT=kT, dr=dr, n_points=8192)
     ref = oz.System(kT=kT, dr=dr, n_points=8192)
     r = syst.r
 
-    like = oz.mie(r, eps=eps, sig=1, m=m, n=n)
-    cross = oz.mie(r, eps=eps_cross, sig=1, m=m, n=n)
+    like = oz.soft_depletion(r, eps=eps, sig_c=sig_c, sig_d=sig_d, n=n, rho_d=rho_d)
+    cross = oz.soft_depletion(r, eps=eps, sig_c=sig_c, sig_d=sig_d, n=n, rho_d=rho_d)
 
     syst.set_interaction(0, 0, like)
     syst.set_interaction(1, 1, like)
     syst.set_interaction(0, 1, cross)
-
-    ref_like = oz.wca(r, eps=eps, sig=1, m=m, n=n)
-    ref_cross = oz.wca(r, eps=eps_cross, sig=1, m=m, n=n)
-
-    ref.set_interaction(0, 0, ref_like)
-    ref.set_interaction(1, 1, ref_like)
-    ref.set_interaction(0, 1, ref_cross)
 
     rhos = [x * rho, (1-x) * rho]
 
@@ -116,7 +110,6 @@ def run(x, rho, m=12, n=6, eps=1.0, eps_cross=1.0, kT=1, prefix='', output_dir='
             'mu': mu,
             's2': s2,
             'rho': rho,
-            'kT': kT,
             'x': x}
     file_name = '{}x_{:.5f}-rho_{:.3f}.pkl'.format(prefix, x, rho)
     file_path = os.path.join(output_dir, file_name)
@@ -134,15 +127,10 @@ if __name__ == '__main__':
     rhos = np.arange(0, 1.0)
     rhos = np.arange(0.55, 0.65, 0.001)
     # rhos = np.arange(0.55, 0.65, 0.01)
-    rhos = [0.62]
 
     xs = [1, 0.9, 0.8, 0.7, 0.6, 0.5]
-    xs = np.arange(0.5, 1, 0.05)
 
-    temps = np.arange(0.8, 1.2, 0.05)
-
-    variables = OrderedDict([#('rho', rhos),
-                             ('kT', temps),
+    variables = OrderedDict([('rho', rhos),
                              ('x', xs)])
 
     print('n_runs', np.product([len(x) for x in variables.values()]))
@@ -151,22 +139,21 @@ if __name__ == '__main__':
 
     eps = 1.0
     eps_cross = 0.95
-    run_prefix = 'two_comp_temp_eps-{:.2f}-{:.2f}'.format(eps, eps_cross)
+    run_prefix = 'two_comp_eps-{:.2f}-{:.2f}'.format(eps, eps_cross)
     # run(x=0.5, rho=0.68, m=50, n=18, prefix=run_prefix, output_dir=pkl_dir)
     from distributed import Client
     client = Client()
     data = [client.submit(run,
                           x=x,
-                          rho=rhos[0],
+                          rho=rho,
                           m=12,
                           n=6,
                           eps=eps,
-                          kT=kT,
                           eps_cross=eps_cross,
                           prefix=run_prefix,
                           output_dir=pkl_dir)
             for x in xs
-            for kT in temps]
+            for rho in rhos]
 
     # data = progress(data)
     data = client.gather(data)

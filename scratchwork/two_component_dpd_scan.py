@@ -4,6 +4,7 @@ import glob
 import pickle
 import os
 import shutil
+import tempfile
 from tempfile import mkdtemp
 
 import numpy as np
@@ -40,26 +41,19 @@ def init_raw_array(r, variables, raw_props):
     return raw_data
 
 
-def run(x, rho, m=12, n=6, eps=1.0, eps_cross=1.0, kT=1, prefix='', output_dir=''):
+def run(x, rho, a_ii=1.0, a_jj=1.0, a_ij=1.0, kT=1, prefix='', output_dir=''):
 
     dr = 0.01
     syst = oz.System(kT=kT, dr=dr, n_points=8192)
-    ref = oz.System(kT=kT, dr=dr, n_points=8192)
     r = syst.r
 
-    like = oz.mie(r, eps=eps, sig=1, m=m, n=n)
-    cross = oz.mie(r, eps=eps_cross, sig=1, m=m, n=n)
+    U_ii = oz.dpd(r, a_ii)
+    U_jj = oz.dpd(r, a_jj)
+    U_ij = oz.dpd(r, a_ij)
 
-    syst.set_interaction(0, 0, like)
-    syst.set_interaction(1, 1, like)
-    syst.set_interaction(0, 1, cross)
-
-    ref_like = oz.wca(r, eps=eps, sig=1, m=m, n=n)
-    ref_cross = oz.wca(r, eps=eps_cross, sig=1, m=m, n=n)
-
-    ref.set_interaction(0, 0, ref_like)
-    ref.set_interaction(1, 1, ref_like)
-    ref.set_interaction(0, 1, ref_cross)
+    syst.set_interaction(0, 0, U_ii)
+    syst.set_interaction(1, 1, U_jj)
+    syst.set_interaction(0, 1, U_ij)
 
     rhos = [x * rho, (1-x) * rho]
 
@@ -70,7 +64,7 @@ def run(x, rho, m=12, n=6, eps=1.0, eps_cross=1.0, kT=1, prefix='', output_dir='
                 rhos=rhos, closure_name='hnc', #reference_system=ref,
                 mix_param=mix, status_updates=False, max_iter=5000)
         except PyozError as e:
-            print('Mix', mix, e)
+            print(e)
             continue
         else:
             B2 = oz.second_virial_coefficient(syst)
@@ -127,42 +121,36 @@ def run(x, rho, m=12, n=6, eps=1.0, eps_cross=1.0, kT=1, prefix='', output_dir='
 if __name__ == '__main__':
     # === VARIABLES === #
     d_epsilon = 0.05
-    epsilons = np.arange(0.5, 5.0, d_epsilon)
-    epsilons = [1]
+    a_ii = 15.0
+    a_jj = 31.6
+    a_ij = 27.2
 
-    d_rho = 0.05
-    rhos = np.arange(0, 1.0)
-    rhos = np.arange(0.55, 0.65, 0.001)
-    # rhos = np.arange(0.55, 0.65, 0.01)
-    rhos = [0.62]
+    rho = 3.0
 
-    xs = [1, 0.9, 0.8, 0.7, 0.6, 0.5]
-    xs = np.arange(0.5, 1, 0.05)
+    xs = np.arange(0, 1, 0.01)
 
-    temps = np.arange(0.8, 1.2, 0.05)
+    temps = np.arange(1.0, 1.5, 0.01)
 
-    variables = OrderedDict([#('rho', rhos),
-                             ('kT', temps),
+    variables = OrderedDict([('kT', temps),
                              ('x', xs)])
 
     print('n_runs', np.product([len(x) for x in variables.values()]))
     # === VARIABLES === #
-    pkl_dir = mkdtemp(prefix='pyoz_')
-
+    # with tempfile.TemporaryDirectory(prefix='pyoz_') as pkl_dir:
+    pkl_dir = 'scan'
     eps = 1.0
     eps_cross = 0.95
-    run_prefix = 'two_comp_temp_eps-{:.2f}-{:.2f}'.format(eps, eps_cross)
-    # run(x=0.5, rho=0.68, m=50, n=18, prefix=run_prefix, output_dir=pkl_dir)
+    run_prefix = 'two_comp_DPD-{:.2f}-{:.2f}-{:.2f}'.format(a_ii, a_jj, a_ij)
+
     from distributed import Client
     client = Client()
     data = [client.submit(run,
                           x=x,
-                          rho=rhos[0],
-                          m=12,
-                          n=6,
-                          eps=eps,
+                          rho=3.0,
+                          a_ii=a_ii,
+                          a_jj=a_jj,
+                          a_ij=a_ij,
                           kT=kT,
-                          eps_cross=eps_cross,
                           prefix=run_prefix,
                           output_dir=pkl_dir)
             for x in xs
@@ -200,11 +188,13 @@ if __name__ == '__main__':
     # Store dat stuff
     os.makedirs('data', exist_ok=True)
     ds = thermo_data.to_dataset(name='THERMO')
-    ds.to_netcdf('data/{}thermo_data.nc'.format(run_prefix))
+    path = 'data/{}thermo_data.nc'.format(run_prefix)
+    ds.to_netcdf(path)
 
     ds = raw_data.to_dataset(name='RAW')
-    ds.to_netcdf('data/{}raw_data.nc'.format(run_prefix))
+    path = 'data/{}thermo_data.nc'.format(run_prefix)
+    ds.to_netcdf(path)
 
-    shutil.rmtree(pkl_dir)
+    # shutil.rmtree(pkl_dir)
     print('FINITO')
 
