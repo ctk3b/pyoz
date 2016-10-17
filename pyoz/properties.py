@@ -136,19 +136,12 @@ def pressure_virial(system):
 
     """
     r, g_r, U_r, rho, kT = system.r, system.g_r, system.U_r, system.rho, system.kT
-    if g_r.shape[0] != 1:
-        raise NotImplementedError('Pressure calculation not yet implemented '
-                                  'for multi-component systems.')
-    min_r = 50
-    U_r = np.squeeze(U_r)
-    g_r = np.squeeze(g_r)[min_r:-1]
-    rho = np.squeeze(rho)
     dr = r[1] - r[0]
-    dUdr = (np.diff(U_r) / dr)[min_r:]
-    r = r[min_r:-1]
+    dUdr = (np.diff(U_r) / dr)
 
-    integral = integrate(y=r**3 * g_r * dUdr, x=r)
-    return rho * kT - 2/3 * np.pi * rho**2 * integral
+    integral = integrate(y=r[1:]**3 * g_r[:, :, 1:] * dUdr, x=r[1:])
+    pressures = rho * kT - 2/3 * np.pi * rho**2 * integral
+    return np.sum(np.tril(pressures))
 
 
 def excess_chemical_potential(system):
