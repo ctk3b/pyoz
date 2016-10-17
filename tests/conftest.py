@@ -16,7 +16,7 @@ def one_component_lj():
     lj = oz.System(kT=T)
 
     r = lj.r
-    lj.set_interaction(0, 0, oz.lennard_jones(r, eps / T, sig))
+    lj.set_interaction(0, 0, oz.lennard_jones(r, eps, sig))
     lj.solve(rhos=rhos, closure_name='hnc')
     return lj
 
@@ -34,9 +34,9 @@ def two_component_one_inf_dilute_lj():
     lj = oz.System(kT=T)
 
     r = lj.r
-    lj.set_interaction(0, 0, oz.lennard_jones(r, eps[0] / T, sig[0]))
-    lj.set_interaction(1, 1, oz.lennard_jones(r, eps[1] / T, sig[1]))
-    lj.set_interaction(0, 1, oz.lennard_jones(r, eps_01 / T, sig_01))
+    lj.set_interaction(0, 0, oz.lennard_jones(r, eps[0], sig[0]))
+    lj.set_interaction(1, 1, oz.lennard_jones(r, eps[1], sig[1]))
+    lj.set_interaction(0, 1, oz.lennard_jones(r, eps_01, sig_01))
 
     lj.solve(rhos=rhos, closure_name='hnc')
     return lj
@@ -55,9 +55,9 @@ def two_component_identical_lj():
     lj = oz.System(kT=T)
 
     r = lj.r
-    lj.set_interaction(0, 0, oz.lennard_jones(r, eps[0] / T, sig[0]))
-    lj.set_interaction(1, 1, oz.lennard_jones(r, eps[1] / T, sig[1]))
-    lj.set_interaction(0, 1, oz.lennard_jones(r, eps_01 / T, sig_01))
+    lj.set_interaction(0, 0, oz.lennard_jones(r, eps[0], sig[0]))
+    lj.set_interaction(1, 1, oz.lennard_jones(r, eps[1], sig[1]))
+    lj.set_interaction(0, 1, oz.lennard_jones(r, eps_01, sig_01))
 
     lj.solve(rhos=rhos, closure_name='hnc')
     return lj
@@ -76,9 +76,9 @@ def two_component_lj():
     lj = oz.System(kT=T)
 
     r = lj.r
-    lj.set_interaction(0, 0, oz.lennard_jones(r, eps[0] / T, sig[0]))
-    lj.set_interaction(1, 1, oz.lennard_jones(r, eps[1] / T, sig[1]))
-    lj.set_interaction(0, 1, oz.lennard_jones(r, eps_01 / T, sig_01))
+    lj.set_interaction(0, 0, oz.lennard_jones(r, eps[0], sig[0]))
+    lj.set_interaction(1, 1, oz.lennard_jones(r, eps[1], sig[1]))
+    lj.set_interaction(0, 1, oz.lennard_jones(r, eps_01, sig_01))
 
     lj.solve(rhos=rhos, closure_name='hnc')
     return lj

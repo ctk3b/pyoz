@@ -136,3 +136,17 @@ def test_solve_with_reference():
     with pytest.raises(PyozError):
         lj.solve(rhos=0.01, closure_name='RHNC')
     lj.solve(rhos=0.01, closure_name='RHNC', reference_system=wca_ref)
+
+
+def test_unconverged():
+    lj = oz.System()
+
+    r = lj.r
+    lj.set_interaction(0, 0, oz.lennard_jones(r, 1, 1))
+
+    g_r, c_r, e_r, H_k = lj.solve(rhos=[10], closure_name='hnc')
+    assert np.isnan(g_r).all()
+    assert np.isnan(c_r).all()
+    assert np.isnan(e_r).all()
+    assert np.isnan(H_k).all()
+

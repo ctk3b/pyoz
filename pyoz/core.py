@@ -44,6 +44,7 @@ class System(object):
     def n_components(self):
         return self.U_r.shape[0]
 
+
     def set_interaction(self, comp1_idx, comp2_idx, potential):
         """Set an interaction potential between two components.
 
@@ -143,9 +144,8 @@ class System(object):
         else:
             e_r = initial_e_r
 
-        matrix_shape = (n_components, n_components, n_pts)
-        C_k = np.zeros(matrix_shape)
-        E = np.zeros(matrix_shape)
+        C_k = np.zeros_like(U_r)
+        E = np.zeros_like(U_r)
         for n in range(n_pts):
             E[:, :, n] = np.eye(n_components)
 
@@ -193,7 +193,8 @@ class System(object):
                 break
 
             if np.isnan(rms_norm) or np.isinf(rms_norm):
-                raise PyozError('Diverged at iteration # {}'.format(n_iter))
+                logger.info('Diverged at iteration # {}'.format(n_iter))
+                return self.nan_arrays
 
             # Iterate.
             e_r = picard_iteration(e_r, e_r_previous, mix_param)
@@ -203,7 +204,8 @@ class System(object):
                     n_iter, time.time() - loop_start, rms_norm)
                 )
         else:
-            raise PyozError('Exceeded max # of iterations: {}'.format(n_iter))
+            logger.info('Exceeded max # of iterations: {}'.format(n_iter))
+            return self.nan_arrays
         end = time.time()
 
         # Set before H_k error so you can still extract info if unphysical.
@@ -215,12 +217,20 @@ class System(object):
         self.H_k = H_k
 
         if (H_k < -1).any():
-            raise PyozError('Converged to unphysical result.')
+            logger.info('Converged to unphysical result.')
+            return self.nan_arrays
 
         logger.info('Converged in {:.2f}s after {} iterations'.format(
             end-start, n_iter)
         )
         return g_r, c_r, e_r, H_k
+
+    @property
+    def nan_arrays(self):
+        """Used as return value for `solve` when unconverged. """
+        nans = np.empty_like(self.U_r)
+        nans[:] = np.nan
+        return nans, nans, nans, nans
 
     def _validate_solve_inputs(self, rhos):
         if self.U_r.shape[0] == 0:
