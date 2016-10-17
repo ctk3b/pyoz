@@ -3,6 +3,7 @@
 import logging
 
 from pyoz.core import System
+from pyoz.closure import closure_names
 from pyoz.potentials import *
 from pyoz.properties import *
 from pyoz import unit

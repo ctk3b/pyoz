@@ -73,31 +73,46 @@ class System(object):
         # Needs to reduce size of U_r if comp1_idx == comp2_idx
         raise NotImplementedError
 
-    def solve(self, rhos, closure_name='hnc', initial_e_r=None, mix_param=0.8,
-              tol=1e-9, status_updates=False,  max_iter=1000, **kwargs):
+    def solve(self, rhos, closure_name='hnc', initial_e_r=None, bonds=None,
+              mix_param=0.8, tol=1e-9, status_updates=False,  max_iter=1000,
+              **kwargs):
         """Solve the Ornstein-Zernike equation for this system.
 
         Parameters
         ----------
         rhos : float or list-like
+            The number densities of each component.
         closure_name : str
+            The name of the closure to use. Valid options can be viewed via
+            `print(pyoz.closure_names)`.
         initial_e_r : np.ndarray, shape=(n_comps, n_comps, n_pts), dtype=float
+            The initial values to use for the indirect correlation function.
+        bonds : np.ndarray, shape=(n_comps, n_comps), dtype=float
+            The intra-molecular bond distance matrix.
         mix_param : float
+            Mixing ratio used for Picard iteration.
         tol : float
+            Convergence tolerance.
         status_updates : bool
+            Display convergence information at every iteration.
         max_iter : int
+            Maximum number of iterations.
 
         Returns
         -------
         g_r : np.ndarray, shape=(n_comps, n_comps, n_pts), dtype=float
+            Radial distribution functions for all components.
         c_r : np.ndarray, shape=(n_comps, n_comps, n_pts), dtype=float
+            Direct correlation functions for all components.
         e_r : np.ndarray, shape=(n_comps, n_comps, n_pts), dtype=float
+            Indirect correlation functions for all components.
         H_k : np.ndarray, shape=(n_comps, n_comps, n_pts), dtype=float
+            Total correlation functions in fourier space.
 
         """
         # Bring some unchanging variables into the local namespace.
         rhos = self._validate_solve_inputs(rhos)
-        rho_ij = self._set_rhos(rhos)
+        rho_ij = self._set_rho_ij(rhos)
 
         U_r = self.U_r
         n_components = self.n_components
@@ -220,7 +235,7 @@ class System(object):
                             " of potential")
         return rhos
 
-    def _set_rhos(self, rhos):
+    def _set_rho_ij(self, rhos):
         self.rho = np.zeros(shape=(self.n_components, self.n_components))
         for i, j in np.ndindex(self.rho.shape):
             rho_ij = np.sqrt(rhos[i] * rhos[j])

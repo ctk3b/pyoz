@@ -43,6 +43,7 @@ def percus_yevick(U_r, e_r, kT, **kwargs):
 supported_closures = {'HNC': hypernetted_chain,
                       'RHNC': reference_hypernetted_chain,
                       'PY': percus_yevick}
+closure_names = supported_closures.keys()
 
 
 # Currently unimplemented closures on the wishlist.
