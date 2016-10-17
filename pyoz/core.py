@@ -73,7 +73,7 @@ class System(object):
         # Needs to reduce size of U_r if comp1_idx == comp2_idx
         raise NotImplementedError
 
-    def solve(self, rhos, closure_name='hnc', initial_e_r=None, bonds=None,
+    def solve(self, rhos, closure_name='hnc', initial_e_r=None,
               mix_param=0.8, tol=1e-9, status_updates=False,  max_iter=1000,
               **kwargs):
         """Solve the Ornstein-Zernike equation for this system.
@@ -87,8 +87,6 @@ class System(object):
             `print(pyoz.closure_names)`.
         initial_e_r : np.ndarray, shape=(n_comps, n_comps, n_pts), dtype=float
             The initial values to use for the indirect correlation function.
-        bonds : np.ndarray, shape=(n_comps, n_comps), dtype=float
-            The intra-molecular bond distance matrix.
         mix_param : float
             Mixing ratio used for Picard iteration.
         tol : float
