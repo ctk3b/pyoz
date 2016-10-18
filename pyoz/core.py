@@ -34,7 +34,7 @@ class System(object):
         self.r = np.linspace(dr, self.n_pts * dr - dr, self.n_pts)
         self.k = np.linspace(dk, self.n_pts * dk - dk, self.n_pts)
         self.U_r = np.zeros(shape=(0, 0, self.n_pts))
-        self.rho = None
+        self.rho_ij = None
 
         # Results get stored after `System.solve` successfully completes.
         self.g_r = self.h_r = self.c_r = self.e_r = self.H_k = None
@@ -244,20 +244,20 @@ class System(object):
         return rhos
 
     def _set_rho_ij(self, rhos):
-        self.rho = np.zeros(shape=(self.n_components, self.n_components))
-        for i, j in np.ndindex(self.rho.shape):
+        self.rho_ij = np.zeros(shape=(self.n_components, self.n_components))
+        for i, j in np.ndindex(self.rho_ij.shape):
             rho_ij = np.sqrt(rhos[i] * rhos[j])
-            self.rho[i, j] = rho_ij
-        return self.rho
+            self.rho_ij[i, j] = rho_ij
+        return self.rho_ij
 
     def __repr__(self):
         descr = list('<{}'.format(self.name))
-        if self.rho is not None:
-            descr.append('; {} component'.format(self.rho.shape[0]))
-            if self.rho.shape[0] > 1:
+        if self.rho_ij is not None:
+            descr.append('; {} component'.format(self.rho_ij.shape[0]))
+            if self.rho_ij.shape[0] > 1:
                 descr.append('s')
             descr.append('; ρ:')
-            for rho in self.rho.diagonal():
+            for rho in self.rho_ij.diagonal():
                 descr.append(' {:.6g}'.format(rho))
         descr.append('>')
         return ''.join(descr)

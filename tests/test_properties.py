@@ -39,9 +39,15 @@ def test_isothermal_compressibility(two_component_lj):
     pass
 
 
-@pytest.mark.skipif(True, reason='Not yet implemented')
-def test_pressure_virial(two_component_lj):
-    pass
+def test_pressure_virial(one_component_lj,
+                         two_component_one_inf_dilute_lj,
+                         two_component_identical_lj):
+    P_one = oz.pressure_virial(one_component_lj)
+    P_inf = oz.pressure_virial(two_component_one_inf_dilute_lj)
+    P_two = oz.pressure_virial(two_component_identical_lj)
+
+    assert np.allclose(P_one, P_inf, atol=1e-4)
+    assert np.allclose(P_one, P_two, atol=1e-4)
 
 
 @pytest.mark.skipif(True, reason='Not yet implemented')
