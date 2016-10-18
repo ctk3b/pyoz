@@ -88,7 +88,7 @@ def _bhatia_thornton(system, combination):
 
 
 def _Snn(system):
-    rhos, H_k = np.diag(system.rho), system.H_k
+    rhos, H_k = np.diag(system.rho_ij), system.H_k
     rho = np.sum(rhos)
     xs = rhos / rho
     return 1 + rho * (    xs[0] * xs[0] * H_k[0, 0] +
@@ -97,7 +97,7 @@ def _Snn(system):
 
 
 def _Snc(system):
-    rhos, H_k = np.diag(system.rho), system.H_k
+    rhos, H_k = np.diag(system.rho_ij), system.H_k
     rho = np.sum(rhos)
     xs = rhos / rho
     x_ij = xs[0] * xs[1]
@@ -106,7 +106,7 @@ def _Snc(system):
 
 
 def _Scc(system):
-    rhos, H_k = np.diag(system.rho), system.H_k
+    rhos, H_k = np.diag(system.rho_ij), system.H_k
     rho = np.sum(rhos)
     xs = rhos / rho
     x_ij = xs[0] * xs[1]
@@ -168,7 +168,7 @@ def excess_chemical_potential(system):
         raise PyozError('Excess chemical potential calculation is only valid'
                         'for hyper-netted chain closures.')
     r, h_r, e_r, c_r, kT = system.r, system.h_r, system.e_r, system.c_r, system.kT
-    rho = system.rho
+    rho = system.rho_ij
     n_components = system.n_components
     mu_ex = np.zeros(shape=n_components)
     for i in range(n_components):
@@ -181,7 +181,7 @@ def excess_chemical_potential(system):
 
 
 def second_virial_coefficient(system):
-    r, U_r, kT, rho = system.r, system.U_r, system.kT, system.rho
+    r, U_r, kT, rho = system.r, system.U_r, system.kT, system.rho_ij
     if U_r.shape[0] == 1:
         return -2 * np.pi * integrate(y=(np.exp(-U_r[0, 0] / kT) - 1) * r**2, x=r)
     elif U_r.shape[0] == 2:
@@ -202,7 +202,7 @@ def two_particle_excess_entropy(system):
 
     Eqn. 9 in A Baranyi and DJ Evans, Phys. Rev. A., 1989
     """
-    r, g_r, rho = system.r, system.g_r, system.rho[0]
+    r, g_r, rho = system.r, system.g_r, system.rho_ij[0]
     if g_r.shape[0] > 1:
         raise NotImplementedError('Entropy calculation not yet '
                                   'implemented for multi-component systems.')
@@ -217,7 +217,7 @@ def isothermal_compressibility(system):
     if system.g_r.shape[0] > 1:
         raise NotImplementedError('Compressibility calculation not yet '
                                   'implemented for multi-component systems.')
-    return system.S_k[0] / system.rho[0] / system.kT
+    return system.S_k[0] / system.rho_ij[0] / system.kT
 
 
 def activity_coefficient(system):
