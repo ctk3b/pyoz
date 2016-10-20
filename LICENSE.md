@@ -1,7 +1,10 @@
 Modified BSD License
 ====================
 
-_Copyright © 2008-2009, Lubos Vrbka_
+Original work _Copyright © 2008-2009, Lubos Vrbka_
+
+Modified work _Copyright © 2016, Christoph Klein_
+
 _All rights reserved._
 
 Redistribution and use in source and binary forms, with or without

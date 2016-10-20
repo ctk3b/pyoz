@@ -17,4 +17,4 @@ install:
     - pip install -e .
 
 script:
-    - py.test -vs
+    - py.test -v
