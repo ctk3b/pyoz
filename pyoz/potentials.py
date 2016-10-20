@@ -43,6 +43,13 @@ def screened_coulomb(r, q1, q2, bjerrum_length=1, debye_length=1):
 
 
 def soft_depletion(r, eps, sig_c, sig_d, n, rho_d):
+    """
+    References
+    ----------
+    ..[1] "How soft repulsions enhance the depletion mechanism", Rovigatti, Gnan,
+    Parola, Zaccarelli: Soft Matter 2015, Equation 2
+    
+    """
     sig_cd = (sig_c + sig_d) / 2
 
     y = r - 2 * sig_cd
