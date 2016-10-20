@@ -87,3 +87,9 @@ def test_debug(one_component_lj,
     two = integrate_dat(two_component_one_inf_dilute_lj)
     assert np.allclose(one, two[0, 0])
 
+def test_debug1(one_component_lj,
+               two_component_one_inf_dilute_lj):
+
+    one = one_component_lj
+    two = two_component_one_inf_dilute_lj
+    assert np.allclose(one.g_r[0, 0], two.g_r[0, 0])
