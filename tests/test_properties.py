@@ -77,8 +77,8 @@ def integrate_dat(one):
     r, g_r, U_r = one.r, one.g_r, one.U_r
     dr = r[1] - r[0]
     dUdr = (np.diff(U_r) / dr)
-    # return integrate(y=r[1:]**3 * g_r[:, :, 1:] * dUdr, x=r[1:])
-    return integrate(y=r[1:]**3 * g_r[:, :, 1:], x=r[1:])
+    return integrate(y=r[1:]**3 * g_r[:, :, 1:] * dUdr, x=r[1:])
+    # return integrate(y=r[1:]**3 * g_r[:, :, 1:], x=r[1:])
     # return integrate(y=g_r[:, :, 1:], x=r[1:])
 
 
