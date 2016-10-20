@@ -44,7 +44,6 @@ class System(object):
     def n_components(self):
         return self.U_r.shape[0]
 
-
     def set_interaction(self, comp1_idx, comp2_idx, potential):
         """Set an interaction potential between two components.
 
@@ -123,7 +122,7 @@ class System(object):
 
         # Lookup the closure.
         try:
-            closure = supported_closures[closure_name.upper()]
+            closure = supported_closures[closure_name.lower()]
         except KeyError:
             raise PyozError('Unsupported closure: ', closure_name)
 
@@ -208,17 +207,12 @@ class System(object):
             return self.nan_arrays
         end = time.time()
 
-        # Set before H_k error so you can still extract info if unphysical.
         c_r = closure(U_r, e_r, self.kT, **kwargs)
         self.c_r = c_r
         self.g_r = g_r = c_r + e_r + 1
         self.h_r = g_r - 1
         self.e_r = e_r
-        self.H_k = H_k
-
-        if (H_k < -1).any():
-            logger.info('Converged to unphysical result.')
-            return self.nan_arrays
+        self.h_k = H_k
 
         logger.info('Converged in {:.2f}s after {} iterations'.format(
             end-start, n_iter)
