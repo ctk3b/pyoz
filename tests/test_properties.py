@@ -76,8 +76,9 @@ from scipy.integrate import simps as integrate
 def integrate_dat(one):
     r, g_r, U_r = one.r, one.g_r, one.U_r
     dr = r[1] - r[0]
-    dUdr = (np.diff(U_r) / dr)
-    return integrate(y=r[1:]**3 * g_r[:, :, 1:] * dUdr, x=r[1:])
+    # dUdr = (np.diff(U_r) / dr)
+    # return integrate(y=r[1:]**3 * g_r[:, :, 1:] * dUdr, x=r[1:])
+    return integrate(y=g_r[:, :, 1:], x=r[1:])
 
 
 def test_debug(one_component_lj,
@@ -92,4 +93,5 @@ def test_debug1(one_component_lj,
 
     one = one_component_lj
     two = two_component_one_inf_dilute_lj
+    assert np.allclose(one.g_r[0, 0], two.g_r[0, 0])
     assert np.allclose(one.g_r[0, 0], two.g_r[0, 0])
