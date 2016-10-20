@@ -106,4 +106,4 @@ def test_debug2(one_component_lj,
     dr = one.r[1] - one.r[0]
     du_1 = np.diff(one.U_r, dr)
     du_2 = np.diff(two.U_r, dr)
-    assert np.allclose(du_1.[0, 0], du_2.[0, 0])
+    assert np.allclose(du_1[0, 0], du_2[0, 0])
