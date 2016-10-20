@@ -40,9 +40,19 @@ def percus_yevick(U_r, e_r, kT, **kwargs):
     c_r = np.exp(-U_r / kT) * (1 + e_r) - e_r - 1
     return c_r
 
-supported_closures = {'HNC': hypernetted_chain,
-                      'RHNC': reference_hypernetted_chain,
-                      'PY': percus_yevick}
+supported_closures = {'hnc': hypernetted_chain,
+                      'hypernetted chain': hypernetted_chain,
+                      'hyper-netted chain': hypernetted_chain,
+                      'hypernetted-chain': hypernetted_chain,
+
+                      'rhnc': reference_hypernetted_chain,
+                      'reference hypernetted chain': reference_hypernetted_chain,
+                      'reference hyper-netted chain': reference_hypernetted_chain,
+                      'reference hypernetted-chain': reference_hypernetted_chain,
+
+                      'py': percus_yevick,
+                      'percus yevick': percus_yevick,
+                      'percus-yevick': percus_yevick}
 closure_names = supported_closures.keys()
 
 
