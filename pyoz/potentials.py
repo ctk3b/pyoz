@@ -2,7 +2,7 @@ import numpy as np
 
 
 __all__ = ['mie', 'lennard_jones', 'wca', 'coulomb', 'screened_coulomb', 'dpd',
-           'soft_depletion']
+           'soft_depletion', 'hard_sphere', 'square_well']
 
 
 def arithmetic(a, b):
@@ -11,6 +11,11 @@ def arithmetic(a, b):
 
 def geometric(a, b):
     return np.sqrt(a * b)
+
+
+def find_nearest(array, value):
+    idx = (np.abs(array - value)).argmin()
+    return idx, array[idx]
 
 
 def mie(r, eps, sig, m, n):
@@ -68,3 +73,19 @@ def dpd(r, a):
     U[:cutoff] = 0.5 * a * (1 - r[:cutoff])**2
     return U
 
+
+def hard_sphere(r, d):
+    U = np.zeros_like(r)
+    idx, _ = find_nearest(r, d/2)
+    U[:idx] = np.inf
+    return U
+
+
+def square_well(r, d, da, e):
+    U = np.zeros_like(r)
+    d_idx, _ = find_nearest(r, d/2)
+    U[:d_idx] = np.inf
+
+    da_idx, _ = find_nearest(r, da/2)
+    U[d_idx:da_idx] = -e
+    return U
