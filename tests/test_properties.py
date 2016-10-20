@@ -68,3 +68,22 @@ def test_second_virial_coefficient(two_component_lj):
 @pytest.mark.skipif(True, reason='Not yet implemented')
 def test_activity_coefficient(two_component_lj):
     pass
+
+
+from scipy.integrate import simps as integrate
+
+
+def integrate_dat(one):
+    r, g_r, U_r = one.r, one.g_r, one.U_r
+    dr = r[1] - r[0]
+    dUdr = (np.diff(U_r) / dr)
+    return integrate(y=r[1:]**3 * g_r[:, :, 1:] * dUdr, x=r[1:])
+
+
+def test_debug(one_component_lj,
+               two_component_one_inf_dilute_lj):
+
+    one = integrate_dat(one_component_lj)
+    two = integrate_dat(two_component_one_inf_dilute_lj)
+    assert np.allclose(one, two[0, 0])
+
