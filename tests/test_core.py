@@ -105,9 +105,9 @@ def test_two_component_identical(one_component_lj, two_component_identical_lj):
     assert np.allclose(one.g_r[0, 0], two.g_r[0, 1], equal_nan=True)
     assert np.allclose(one.g_r[0, 0], two.g_r[1, 1], equal_nan=True)
 
-    assert np.allclose(one.H_k[0, 0] / 2, two.H_k[0, 0], equal_nan=True)
-    assert np.allclose(one.H_k[0, 0] / 2, two.H_k[0, 1], equal_nan=True)
-    assert np.allclose(one.H_k[0, 0] / 2, two.H_k[1, 1], equal_nan=True)
+    assert np.allclose(one.h_k[0, 0] / 2, two.h_k[0, 0], equal_nan=True)
+    assert np.allclose(one.h_k[0, 0] / 2, two.h_k[0, 1], equal_nan=True)
+    assert np.allclose(one.h_k[0, 0] / 2, two.h_k[1, 1], equal_nan=True)
 
 
 def test_one_inf_dilute(one_component_lj, two_component_one_inf_dilute_lj):
@@ -116,12 +116,12 @@ def test_one_inf_dilute(one_component_lj, two_component_one_inf_dilute_lj):
 
     assert np.allclose(one.U_r[0, 0], two.U_r[0, 0])
     assert np.allclose(one.g_r[0, 0], two.g_r[0, 0])
-    assert np.allclose(one.H_k[0, 0], two.H_k[0, 0])
+    assert np.allclose(one.h_k[0, 0], two.h_k[0, 0])
 
     assert np.allclose(two.g_r[0, 1], np.exp(-two.U_r[0, 1]))
     assert np.allclose(two.g_r[1, 1], np.exp(-two.U_r[1, 1]))
-    assert not np.any(two.H_k[0, 1])
-    assert not np.any(two.H_k[1, 1])
+    assert not np.any(two.h_k[0, 1])
+    assert not np.any(two.h_k[1, 1])
 
 
 def test_solve_with_reference():
@@ -144,9 +144,9 @@ def test_unconverged():
     r = lj.r
     lj.set_interaction(0, 0, oz.lennard_jones(r, 1, 1))
 
-    g_r, c_r, e_r, H_k = lj.solve(rhos=[10], closure_name='hnc')
+    g_r, c_r, e_r, h_k = lj.solve(rhos=[10], closure_name='hnc')
     assert np.isnan(g_r).all()
     assert np.isnan(c_r).all()
     assert np.isnan(e_r).all()
-    assert np.isnan(H_k).all()
+    assert np.isnan(h_k).all()
 

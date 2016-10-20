@@ -62,20 +62,20 @@ def structure_factors(system, formalism='Faber-Ziman',
 
 
 def _faber_ziman(system, combination):
-    H_k = system.H_k
-    return 1 + H_k
+    h_k = system.h_k
+    return 1 + h_k
 
 
 def _ashcroft_langreth(system, combination):
-    H_k = system.H_k
-    E = np.zeros_like(H_k)
-    for n in range(H_k.shape[2]):
-        E[:, :, n] = np.eye(H_k.shape[0])
-    return E + H_k
+    h_k = system.h_k
+    E = np.zeros_like(h_k)
+    for n in range(h_k.shape[2]):
+        E[:, :, n] = np.eye(h_k.shape[0])
+    return E + h_k
 
 
 def _bhatia_thornton(system, combination):
-    if system.H_k.shape[0] != 2:
+    if system.h_k.shape[0] != 2:
         raise NotImplementedError('Only implemented for two component systems')
     try:
         Sxx_function = _bhatia_thornton_combinations[combination.lower()]
@@ -88,31 +88,31 @@ def _bhatia_thornton(system, combination):
 
 
 def _Snn(system):
-    rhos, H_k = np.diag(system.rho_ij), system.H_k
+    rhos, h_k = np.diag(system.rho_ij), system.h_k
     rho = np.sum(rhos)
     xs = rhos / rho
-    return 1 + rho * (    xs[0] * xs[0] * H_k[0, 0] +
-                      2 * xs[0] * xs[1] * H_k[0, 1] +
-                          xs[1] * xs[1] * H_k[1, 1])
+    return 1 + rho * (    xs[0] * xs[0] * h_k[0, 0] +
+                      2 * xs[0] * xs[1] * h_k[0, 1] +
+                          xs[1] * xs[1] * h_k[1, 1])
 
 
 def _Snc(system):
-    rhos, H_k = np.diag(system.rho_ij), system.H_k
+    rhos, h_k = np.diag(system.rho_ij), system.h_k
     rho = np.sum(rhos)
     xs = rhos / rho
     x_ij = xs[0] * xs[1]
-    return rho * x_ij * (xs[0] * (H_k[0, 0] - H_k[0, 1]) -
-                         xs[1] * (H_k[1, 1] - H_k[0, 1]))
+    return rho * x_ij * (xs[0] * (h_k[0, 0] - h_k[0, 1]) -
+                         xs[1] * (h_k[1, 1] - h_k[0, 1]))
 
 
 def _Scc(system):
-    rhos, H_k = np.diag(system.rho_ij), system.H_k
+    rhos, h_k = np.diag(system.rho_ij), system.h_k
     rho = np.sum(rhos)
     xs = rhos / rho
     x_ij = xs[0] * xs[1]
-    return x_ij * (1 + rho * x_ij * (    H_k[0, 0] +
-                                         H_k[1, 1] -
-                                     2 * H_k[0, 1]))
+    return x_ij * (1 + rho * x_ij * (    h_k[0, 0] +
+                                         h_k[1, 1] -
+                                     2 * h_k[0, 1]))
 
 _sk_formalisms = OrderedDict([('faber-ziman', _faber_ziman),
                               ('fz', _faber_ziman),
