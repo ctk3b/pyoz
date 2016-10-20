@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 import numpy as np
-from scipy.integrate import simps as integrate
+from scipy.integrate import cumtrapz as integrate
 
 from pyoz.closure import hypernetted_chain, reference_hypernetted_chain
 from pyoz.exceptions import PyozError
