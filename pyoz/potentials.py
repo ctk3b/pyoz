@@ -43,11 +43,13 @@ def screened_coulomb(r, q1, q2, bjerrum_length=1, debye_length=1):
 
 
 def soft_depletion(r, eps, sig_c, sig_d, n, rho_d):
-    """
+    """Ideal depletant interaction with inverse power-law repulsion.
+
     References
     ----------
-    ..[1] "How soft repulsions enhance the depletion mechanism", Rovigatti, Gnan,
-    Parola, Zaccarelli: Soft Matter 2015, Equation 2
+    ..[1] "How soft repulsions enhance the depletion mechanism", Rovigatti,
+          Gnan, Parola, Zaccarelli: Soft Matter 2015, Equation 2
+          10.1039/c4sm02218a
     
     """
     sig_cd = (sig_c + sig_d) / 2
