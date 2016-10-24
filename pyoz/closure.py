@@ -42,8 +42,10 @@ def percus_yevick(U_r, e_r, kT, **kwargs):
 
 
 def kovalenko_hirata(U_r, e_r, kT,  **kwargs):
-    hnc_c_r = hypernetted_chain(U_r, e_r, kT, **kwargs)
-    c_r = np.where(-U_r / kT + e_r <= 0, hnc_c_r, -U_r / kT)
+    U = -U_r / kT
+    U_er = U + e_r
+    hnc_c_r = np.exp(U_er) - e_r - 1
+    c_r = np.where(U_er <= 0, hnc_c_r, U)
     return c_r
 
 supported_closures = {'hnc': hypernetted_chain,
@@ -69,15 +71,18 @@ closure_names = supported_closures.keys()
 
 # Currently unimplemented closures on the wishlist.
 def partial_series_expansion_n(U_r, e_r, kT,  **kwargs):
+    # See https://github.com/ctk3b/pyoz/issues/21
     pass
 
 
 def duh_henderson(U_r, e_r, kT,  **kwargs):
     """See: An effective-colloid pair potential for Lennard-Jones
     colloid–polymer mixtures Orlando Guzmán and Juan J. de Pablo """
+    # See https://github.com/ctk3b/pyoz/issues/26
     pass
 
 
 def scoza(U_r, e_r, kT,  **kwargs):
+    # See https://github.com/ctk3b/pyoz/issues/22
     pass
 
