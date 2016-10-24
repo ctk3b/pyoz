@@ -93,9 +93,9 @@ def test_start_solve():
     s1.solve(rhos=[0.1])
 
 
-def test_two_component_identical(one_component_lj, two_component_identical_lj):
-    one = one_component_lj
-    two = two_component_identical_lj
+def test_two_component_identical(one_component_dpd, two_component_identical_dpd):
+    one = one_component_dpd
+    two = two_component_identical_dpd
 
     assert np.allclose(one.U_r[0, 0], two.U_r[0, 0], equal_nan=True)
     assert np.allclose(one.U_r[0, 0], two.U_r[0, 1], equal_nan=True)
@@ -110,9 +110,9 @@ def test_two_component_identical(one_component_lj, two_component_identical_lj):
     assert np.allclose(one.h_k[0, 0] / 2, two.h_k[1, 1], equal_nan=True)
 
 
-def test_one_inf_dilute(one_component_lj, two_component_one_inf_dilute_lj):
-    one = one_component_lj
-    two = two_component_one_inf_dilute_lj
+def test_one_inf_dilute(one_component_dpd, two_component_one_inf_dilute_dpd):
+    one = one_component_dpd
+    two = two_component_one_inf_dilute_dpd
 
     assert np.allclose(one.U_r[0, 0], two.U_r[0, 0])
     assert np.allclose(one.g_r[0, 0], two.g_r[0, 0])

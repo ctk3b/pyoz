@@ -12,7 +12,8 @@ __all__ = ['kirkwood_buff_integrals',
            'excess_chemical_potential',
            'pressure_virial',
            'second_virial_coefficient',
-           'two_particle_excess_entropy']
+           'two_particle_excess_entropy',
+           'internal_energy']
 
 
 def kirkwood_buff_integrals(system):
@@ -230,3 +231,36 @@ def activity_coefficient(system):
     mu_ex = excess_chemical_potential(system)
     return np.exp(mu_ex / system.kT)
 
+
+def internal_energy(system, pair=None):
+    """Compute the internal energy.
+
+    Parameters
+    ----------
+    system : pyoz.System
+    pair : 2-tuple of ints
+        Return only the internal energy for a specific pair, e.g. pair=(0, 1)
+
+    Returns
+    -------
+    U : float
+    """
+    r, U_r, g_r, rho_ij = system.r, system.U_r, system.g_r, system.rho_ij
+
+    rhos = np.diag(rho_ij)
+    rho = np.sum(rhos)
+    xs = rhos / rho
+
+    ideal = 3 / 2 * system.kT
+
+    if pair is None:
+        U_ex = 0
+        for i, j in np.ndindex(U_r.shape[:2]):
+            integral = integrate(y=r**2 * U_r[i, j] * g_r[i, j], x=r)
+            U_ex += rho * xs[i] * xs[j] * integral
+        U_ex *= 2 * np.pi
+    else:
+        i, j = pair
+        integral = integrate(y=r**2 * U_r[i, j] * g_r[i, j], x=r)
+        U_ex = 2 * np.pi * rho * xs[i] * xs[j] * integral
+    return ideal + U_ex
