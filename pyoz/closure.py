@@ -40,6 +40,12 @@ def percus_yevick(U_r, e_r, kT, **kwargs):
     c_r = np.exp(-U_r / kT) * (1 + e_r) - e_r - 1
     return c_r
 
+
+def kovalenko_hirata(U_r, e_r, kT,  **kwargs):
+    hnc_c_r = hypernetted_chain(U_r, e_r, kT, **kwargs)
+    c_r = np.where(-U_r / kT + e_r <= 0, hnc_c_r, -U_r / kT)
+    return c_r
+
 supported_closures = {'hnc': hypernetted_chain,
                       'hypernetted chain': hypernetted_chain,
                       'hyper-netted chain': hypernetted_chain,
@@ -52,15 +58,16 @@ supported_closures = {'hnc': hypernetted_chain,
 
                       'py': percus_yevick,
                       'percus yevick': percus_yevick,
-                      'percus-yevick': percus_yevick}
+                      'percus-yevick': percus_yevick,
+
+                      'kh': kovalenko_hirata,
+                      'kovalenko-hirata': kovalenko_hirata,
+                      'kovalenko hirata': kovalenko_hirata,
+}
 closure_names = supported_closures.keys()
 
 
 # Currently unimplemented closures on the wishlist.
-def kovalenko_hirata(U_r, e_r, kT,  **kwargs):
-    pass
-
-
 def partial_series_expansion_n(U_r, e_r, kT,  **kwargs):
     pass
 
