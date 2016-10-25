@@ -178,7 +178,7 @@ class System(object):
 
             # Snap back to reality.
             for i, j in np.ndindex(n_components, n_components):
-                if rho_ij[i, j] == 0:
+                if rho_ij[i, j] == 0:  # Infinite dilution case.
                     e_r[i, j] = np.zeros_like(k)
                 else:
                     constant = n_pts * dk / 4 / np.pi**2 / (n_pts + 1) / r

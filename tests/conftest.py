@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 import pyoz as oz
-from pyoz.potentials import arithmetic, geometric
 
 
 @pytest.fixture(scope='session')
