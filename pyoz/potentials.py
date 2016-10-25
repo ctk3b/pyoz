@@ -13,11 +13,6 @@ def geometric(a, b):
     return np.sqrt(a * b)
 
 
-def find_nearest(array, value):
-    idx = (np.abs(array - value)).argmin()
-    return idx, array[idx]
-
-
 def mie(r, eps, sig, m, n):
     prefactor = (m / (m - n)) * (m / n)**(n / (m - n))
     return prefactor * eps * ((sig / r)**m - (sig / r)**n)
@@ -77,24 +72,14 @@ def soft_depletion(r, eps, sig_c, sig_d, n, rho_d):
 
 
 def dpd(r, a):
-    cutoff = np.abs(r - 1.0).argmin()
-    U = np.zeros_like(r)
-    U[:cutoff] = 0.5 * a * (1 - r[:cutoff])**2
-    return U
+    return np.where(r < 1, 0.5 * a * (1 - r)**2, 0)
 
 
 def hard_sphere(r, d):
-    U = np.zeros_like(r)
-    idx, _ = find_nearest(r, d/2)
-    U[:idx] = np.inf
-    return U
+    return np.where(r < d, np.inf, 0)
 
 
 def square_well(r, d, da, e):
-    U = np.zeros_like(r)
-    d_idx, _ = find_nearest(r, d/2)
-    U[:d_idx] = np.inf
+    well = np.where(r < da, -e, 0)
+    return np.where(r < d, np.inf, well)
 
-    da_idx, _ = find_nearest(r, da/2)
-    U[d_idx:da_idx] = -e
-    return U
