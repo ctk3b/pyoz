@@ -22,7 +22,7 @@ pip install git+https://github.com/ctk3b/pyoz.git#egg=pyoz
 #### Editable install
 
 If you want to make modifications to the source code, you should install 
-``pyoz`` in [``editable mode``](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs):
+``pyoz`` in [editable mode](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs):
 
 ```bash
 conda install scipy numba

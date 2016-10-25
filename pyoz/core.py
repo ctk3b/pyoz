@@ -120,6 +120,7 @@ class System(object):
         k = self.k
         dk = self.dk
 
+        logger = oz.logger
         # Lookup the closure.
         try:
             closure = supported_closures[closure_name.lower()]
@@ -136,6 +137,9 @@ class System(object):
             _, _, initial_e_r, _ = ref_system.solve(rhos=rhos,
                                                     closure_name='HNC',
                                                     **kwargs)
+            if np.isnan(initial_e_r).all():
+                logger.info('Reference system failed to converge.')
+                return self.nan_arrays
 
         self.closure_used = closure
         if initial_e_r is None:
@@ -149,7 +153,6 @@ class System(object):
             E[:, :, n] = np.eye(n_components)
 
         n_iter = 0
-        logger = oz.logger
         logger.info('Initialized: {}'.format(self))
         if status_updates:
             logger.info('Starting iteration...')
@@ -250,7 +253,7 @@ class System(object):
             descr.append('; {} component'.format(self.rho_ij.shape[0]))
             if self.rho_ij.shape[0] > 1:
                 descr.append('s')
-            descr.append('; ρ:')
+            descr.append('; rho:')
             for rho in self.rho_ij.diagonal():
                 descr.append(' {:.6g}'.format(rho))
         descr.append('>')
