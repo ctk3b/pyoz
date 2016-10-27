@@ -236,7 +236,7 @@ class System(object):
         if not hasattr(rhos, '__iter__'):
             rhos = [rhos]
         if self.U_r.shape[0] != len(rhos):
-            raise PyozError("Number of ρ's provided does not match dimensions"
+            raise PyozError("Number of rho's provided does not match dimensions"
                             " of potential")
         return rhos
 

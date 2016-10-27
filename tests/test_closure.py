@@ -36,8 +36,6 @@ def test_compare_hnc_rhnc():
     hnc = a.solve(rhos=rho, closure_name='hnc')
 
     b_ref.set_interaction(0, 0, U_ref)
-    b_ref.solve(rhos=rho, closure_name='hnc')
-
     b.set_interaction(0, 0, U)
     rhnc = b.solve(rhos=rho, closure_name='rhnc', reference_system=b_ref)
 
