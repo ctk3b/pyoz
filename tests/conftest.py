@@ -43,7 +43,6 @@ def two_component_identical_dpd():
 
     rhos = np.array([0.005, 0.005])
 
-
     r = dpd.r
 
     dpd.set_interaction(0, 0, oz.dpd(r, 10))

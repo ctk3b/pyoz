@@ -11,6 +11,47 @@ from pyoz.misc import rms_normed, solver, picard_iteration
 
 
 class System(object):
+    """Representation of a system which can be solved using Ornstein-Zernike.
+
+    Various attributes of a system can be adjusted, most notably the pair
+    potential describing interactions between components. Once the input
+    attributes have been set, use `solve` to iteratively solve the
+    Ornstein-Zernike equation for the system that you have constructed.
+
+    Attributes
+    ----------
+    name : str
+        A descriptive name for the system.
+    kT : float
+        The temperature of the system in kT
+    n_components: int
+        The number of components in the system. This value is determined
+        from the shape of U_r.
+    n_pts : int
+        The number of points at which to evaluate the distribution functions.
+    rho_ij : np.ndarray, shape=(n_components, n_components,), dtype=float
+        The densities of each
+    r : np.ndarray, shape=(n_pts,), dtype=float
+        The real space values at which to evalute the distribution functions.
+    dr : float
+        The distance between points in r.
+    k : np.ndarray, shape=(n_pts,), dtype=float
+        The k-space values at which to evalute the distribution functions.
+    dk : float
+        The distance between points in k.
+    U_r : np.ndarray, shape=(n_components, n_components, n_pts,), dtype=float
+        The pair potentials for all pairs of components. Modify this using the
+        `set_interaction` method.
+    g_r : np.ndarray, shape=(n_components, n_components, n_pts,), dtype=float
+        The radial distribution functions for all pairs of components.
+    c_r : np.ndarray, shape=(n_components, n_components, n_pts,), dtype=float
+        The direct correlation functions for all pairs of components.
+    e_r : np.ndarray, shape=(n_components, n_components, n_pts,), dtype=float
+        The indirect correlation functions for all pairs of components.
+    h_k : np.ndarray, shape=(n_components, n_components, n_pts,), dtype=float
+        The k-space total correlation functions for all pairs of components.
+
+    """
     def __init__(self, name='System', **kwargs):
         self.name = name
         self.kT = kwargs.get('kT') or 1
@@ -104,7 +145,7 @@ class System(object):
             Direct correlation functions for all components.
         e_r : np.ndarray, shape=(n_comps, n_comps, n_pts), dtype=float
             Indirect correlation functions for all components.
-        H_k : np.ndarray, shape=(n_comps, n_comps, n_pts), dtype=float
+        h_k : np.ndarray, shape=(n_comps, n_comps, n_pts), dtype=float
             Total correlation functions in fourier space.
 
         """
