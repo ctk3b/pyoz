@@ -45,20 +45,21 @@ def run(x, rho, sig_d, sig_c, rho_d, n=36, eps=1.0, eps_cross=1.0,
 
     dr = 0.01
     syst = oz.System(kT=kT, dr=dr, n_points=8192)
-    ref = oz.System(kT=kT, dr=dr, n_points=8192)
     r = syst.r
 
     like = oz.soft_depletion(r, eps=eps, sig_c=sig_c, sig_d=sig_d, n=n, rho_d=rho_d)
     cross = oz.soft_depletion(r, eps=eps, sig_c=sig_c, sig_d=sig_d, n=n, rho_d=rho_d)
 
     syst.set_interaction(0, 0, like)
-    syst.set_interaction(1, 1, like)
-    syst.set_interaction(0, 1, cross)
+    # syst.set_interaction(1, 1, like)
+    # syst.set_interaction(0, 1, cross)
 
-    rhos = [x * rho, (1-x) * rho]
+    # rhos = [x * rho, (1-x) * rho]
+
+    rhos = rho
 
     g_r, c_r, e_r, H_k = syst.solve(
-        rhos=rhos, closure_name='hnc', #reference_system=ref,
+        rhos=rhos, closure_name='hnc',
         mix_param=0.8, status_updates=False, max_iter=5000)
 
     if np.isnan(g_r).all():

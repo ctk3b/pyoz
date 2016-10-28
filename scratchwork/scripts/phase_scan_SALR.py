@@ -144,7 +144,7 @@ def run(eps, NaCl_wt_perc, SiO2_wt_perc, Z, m=100, n=50, T=298, prefix=''):
     U_r = syst.U_r[0, 0]
     data = {'r': syst.r,
             'k': syst.k,
-            'g_r': g_r,
+            'g_r': g_r[0, 0],
             # 'g_r_ref': g_r_ref,
             'c_r': c_r,
             'e_r': e_r,
@@ -184,12 +184,13 @@ if __name__ == '__main__':
     # epsilons = [5, 6] # 0.5
     # epsilons = [4]
 
-    Zs = [1e3, 5e3, 1e4, 5e4, 1e5]
+    # Zs = [1e3, 5e3, 1e4, 5e4, 1e5]
+    Zs = [1e4, 5e4]
 
     d_NaCl_wt_perc = 0.1
     NaCl_wt_perc = np.arange(0.10, 10, d_NaCl_wt_perc)
     # NaCl_wt_perc = [5e-1, 1, 2, 5, 10]
-    NaCl_wt_perc = [2.0]
+    NaCl_wt_perc = [1.0]
     # NaCl_wt_perc = [0.25]
 
     d_SiO2_wt_perc = 1
