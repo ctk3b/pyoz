@@ -12,4 +12,4 @@ implemented so far.*
 
 ### Getting started
 
-Proper docs coming soon. In the meantime, check out the `examples` folder.
+Check out the `examples` folder.
